@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane } from "@react-three/drei";
+import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
 import * as THREE from 'three';
 
 const MAX_RANGE = 150; // Movement limit
@@ -10,11 +10,15 @@ const SPEED = 1.9; // Movement speed
 const WHEEL_ROTATION_SPEED = 0.25;
 const PERSPECTIVE_SPEED = 0.04;
 const CLOUD_SPEED = 0.005;
-const RADIUS = 3000; // Cylinder radius
+const RADIUS = 5000; // Cylinder radius
+const HEIGHT = 2300; // Cylinder radius
+
 const RADIUS_Y = RADIUS + 50;
 
-const camerCood1 = [0, 150, 450];
-const camerCood2 = [300, 150, 300];
+const camerCood1 = [0, 110, 600];
+const camerCood1WidthUnder1000 = [0, 110, 600];
+const camerCood2 = [0, 150, 450];
+const camerCood3 = [300, 150, 300];
 
 const colors = {
   cream: '#F7EBD4',
@@ -28,9 +32,6 @@ const colors = {
   red1: '#B8143A',
   red2: '#B82214'
 };
-
-const MAX_PAGES = 4;
-
 
 const DriverHead = ({ position }) => {
   const hairsTopRef = useRef();// < THREE.Object3D > (null);
@@ -365,8 +366,8 @@ function Ground({ positionY = -RADIUS_Y, radius = RADIUS }) {
   });
   return (
     <Cylinder ref={groundRef}
-      position={[0, positionY, 0]}
-      args={[radius, radius, radius, 64]}
+      position={[0, positionY, -HEIGHT / 4]}
+      args={[radius, radius, HEIGHT, 64]}
       rotation={[Math.PI / 2, 0, 0]}
       castShadow
       receiveShadow
@@ -491,7 +492,40 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
   );
 }
 
-const texts = ["North", "East", "South", "West"];
+const texts = [
+  "Hello World, My Name is Shrey 👋",
+  "Welcome to my Little Interactive Portfolio 🤗",
+  "I am a full stack developer with UI focus having 10+ years of experience in Software Engineering 👨‍💻",
+  "I have worked in enterprise grade software projects for Major firms 👷🏻‍♂️",
+  "Started my Journey in 2014 with Cognizant in Banking and Finance Domain 💲",
+  "In 2016 I moved to a startup called Eka which provided solutions in commodity and trading domain 🌾",
+  "In 2018, I was recruited in Expedia for travel agent affiliate program ✈️",
+  "In 2019, I moved to JP Morgan Chase Asset and Wealth Management Division for Connect OS Project 🏦",
+  "Since 2021, I have been working in SAP Labs Concur for Invoice Managemant and Payments space. 🧑🏻‍💻",
+  "I am an alumni from Rajasthan Technical University (2010-1014)",
+  "and Birla Institue of Technology and Science(2022-204) 🎓",
+  "I have worked on multiple front-end & Back-end frameworks and utilites along with vast experience in Cloud Native CI/CD practices.",
+  "lets connect to work together and make something cool ✌️ "
+];
+
+const pageColors = [
+  '#ffffff',
+  '#bfc0c0',
+  '#d8dbe2',
+  '#fffcf2',
+  '#ccc5b9',
+  '#bfc0c0',
+  '#eef0f2',
+  '#bed5e8',
+  '#a9bcd0',
+  '#1f7a8c',
+  '#bfdbf7',
+  '#e1e5f2',
+  '#faf9f9'
+];
+
+
+const MAX_PAGES = 13;
 
 function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRotation = [0, 0, 0] }) {
 
@@ -502,13 +536,20 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
     setIdx(textIndex);
   }, [textIndex]);
 
-  return (
+  /* return (
     <mesh position={textPosition} rotation={textRotation}>
       <Text fontSize={50} color={colors.black}>
         {texts[idx]}
       </Text>
       <meshStandardMaterial color={colors.black} />
     </mesh>
+  ); */
+  return (
+    <Html position={textPosition} center>
+      <div style={{ padding: "10px", borderRadius: "5px", width: '300px', height: '300px' }}>
+        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center justify' }}>{texts[idx]}</p>
+      </div>
+    </Html>
   );
 }
 
@@ -530,9 +571,8 @@ function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotat
   );
 }
 
-const pageColors = ['red', 'yellow', 'green', 'blue'];
 
-function BackgroundPages({ textIndex = 0, pagePosition = [0, 200, -300], pageRotation = [0, 0, 0] }) {
+/* function BackgroundPages({ textIndex = 0, pagePosition = [0, 200, -300], pageRotation = [0, 0, 0] }) {
 
   const [idx, setIdx] = useState(0);
 
@@ -550,7 +590,7 @@ function BackgroundPages({ textIndex = 0, pagePosition = [0, 200, -300], pageRot
       </Plane>;
     })
   );
-};
+}; */
 
 function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRotation = [0, Math.PI / 2, 0] }) {
 
@@ -616,7 +656,13 @@ const App = () => {
         background: 'linear-gradient(#DAD4F7, #FFFFFF)'
       }}
         shadows onCreated={({ gl }) => { gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap; }}
-        camera={{ position: camerCood1, fov: 80, near: 1, far: 10000, aspect: window.innerWidth / window.innerHeight }}>
+        camera={{ position: camerCood1, fov: 80, near: 1, far: 10000, aspect: window.innerWidth / window.innerHeight }}
+      >
+        {/* <PerspectiveCamera
+          rotation={[0, 0, 0]}
+          position={[0, 900, 900]}
+          args={[80, window.innerWidth / window.innerHeight, 0.1, 10000]}
+        /> */}
         {/* <fog attach="fog" args={['#efefef', 1, 2000]} /> */}
 
         <ambientLight intensity={1} />
@@ -644,12 +690,12 @@ const App = () => {
         <Sky yAxis={-RADIUS_Y + 300} zAxis={-1200} cloudSize={60} />
 
         <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
-        <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} />
+        {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} /> */}
 
-        <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
-        <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} />
+        {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
+        <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
-        <OrbitControls enableZoom enablePen enableRotate />
+        {/* <OrbitControls enableZoom enablePen enableRotate /> */}
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
