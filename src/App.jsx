@@ -493,7 +493,7 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
 }
 
 const texts = [
-  "Hello World, My Name is Shrey 👋",
+  "Hi, My Name is Shrey 👋",
   "Welcome to my Little Interactive Portfolio 🤗",
   "I am a full stack developer with UI focus having 10+ years of experience in Software Engineering 👨‍💻",
   "I have worked in enterprise grade software projects for Major firms 👷🏻‍♂️",
@@ -546,8 +546,8 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
   ); */
   return (
     <Html position={textPosition} center>
-      <div style={{ padding: "10px", borderRadius: "5px", width: '300px', height: '300px' }}>
-        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center justify' }}>{texts[idx]}</p>
+      <div style={{ padding: "10px", borderRadius: "5px", width: '250px', height: '300px' }}>
+        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center' }}>{texts[idx]}</p>
       </div>
     </Html>
   );
