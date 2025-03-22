@@ -668,8 +668,6 @@ const App = () => {
 
         <Sun sunColor={'#ffff00'} positionX={3 * window.innerWidth} positionY={0.5 * window.innerWidth} />
 
-        <Perf />
-
         <Car direction={direction} />
 
         <Ground positionY={-RADIUS_Y} radius={RADIUS} />
@@ -689,7 +687,8 @@ const App = () => {
         {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
         <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
-        <OrbitControls enableZoom enablePen enableRotate />
+        {/* <OrbitControls enableZoom enablePen enableRotate />
+        <Perf /> */}
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
