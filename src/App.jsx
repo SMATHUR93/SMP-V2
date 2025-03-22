@@ -3,6 +3,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
+import { Perf } from 'r3f-perf'
+
 import * as THREE from 'three';
 
 const MAX_RANGE = 150; // Movement limit
@@ -113,7 +115,7 @@ export function Wheel({ position, rotationSpeed }) {
     <group ref={wheelRef} position={position}>
       {/* Outer Tyre using Torus */}
       <mesh>
-        <torusGeometry args={[20, 5, 160, 320]} />
+        <torusGeometry args={[20, 5]} />
         {/* <meshStandardMaterial map={tyreTexture} /> */}
         <meshStandardMaterial color={colors.black} />
       </mesh>
@@ -126,30 +128,6 @@ export function Wheel({ position, rotationSpeed }) {
         </mesh>
       ))}
     </group>
-  );
-}
-
-function JeepFront({ args, position }) {
-  const cubeRef = useRef();
-
-  useEffect(() => {
-    if (cubeRef.current) {
-      const geometry = cubeRef.current.geometry;
-      const position = geometry.attributes.position;
-
-      // Example: Lowering the 5th vertex (index 4) in Y-axis
-      position.array[1] -= 5;
-      position.array[1 * 3 + 1] -= 5;
-
-      position.needsUpdate = true; // Tell Three.js to update the geometry
-    }
-  }, []);
-
-  return (
-    <mesh position={position} ref={cubeRef}>
-      <boxGeometry args={args} />
-      <meshStandardMaterial color={colors.blue} />
-    </mesh>
   );
 }
 
@@ -166,6 +144,10 @@ function Car({ direction }) {
       newPos = Math.sign(newPos) * MAX_RANGE; // Keep within bounds
     }
 
+    /* if (direction.current === 0 && Math.abs(newPos) > 0.01) {
+      newPos *= (1 - DAMPING); // Damp towards zero
+    } */
+
     setPosition(newPos);
     setRotation(rotation - direction.current * SPEED * 5); // Simulate wheel rotation
 
@@ -179,7 +161,7 @@ function Car({ direction }) {
     <group position={[0, -7, 0]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
-      <Cylinder args={[4, 4, 70, 80]} position={[-60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[4, 4, 70]} position={[-60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
       <RoundedBox args={[60, 30, 70]} radius={3} position={[-30, -15, 0]} castShadow >
@@ -190,7 +172,7 @@ function Car({ direction }) {
       <RoundedBox args={[60, 40, 70]} radius={5} position={[30, -10, 0]} castShadow >
         <meshStandardMaterial color='#B82214' />
 
-        <Sphere args={[3, 3, 3]} position={[30, 10, 20]}>
+        <Sphere args={[3]} position={[30, 10, 20]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
           <pointLight
             args={['#ff0000', 10, 0, 0.3]}
@@ -203,7 +185,7 @@ function Car({ direction }) {
           />
         </Sphere>
 
-        <Sphere args={[3, 3, 3]} position={[30, 10, -20]}>
+        <Sphere args={[3]} position={[30, 10, -20]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
           <pointLight
             args={['#ff0000', 10, 0, 0.3]}
@@ -216,7 +198,7 @@ function Car({ direction }) {
           />
         </Sphere>
       </RoundedBox>
-      <Cylinder args={[4, 4, 70, 80]} position={[60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[4, 4, 70]} position={[60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
 
@@ -228,13 +210,13 @@ function Car({ direction }) {
       </Box>
 
       {/* 🚙 Roll Cage / Windshield Frame */}
-      <Cylinder args={[5, 5, 60, 80]} position={[-30, 15, 30]} rotation={[0, 0, Math.PI / 2]}  >
+      <Cylinder args={[5, 5, 60]} position={[-30, 15, 30]} rotation={[0, 0, Math.PI / 2]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
-      <Cylinder args={[5, 5, 60, 80]} position={[-30, 15, -30]} rotation={[0, 0, Math.PI / 2]}  >
+      <Cylinder args={[5, 5, 60]} position={[-30, 15, -30]} rotation={[0, 0, Math.PI / 2]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
-      <Cylinder args={[5, 5, 60, 80]} position={[-60, 15, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[5, 5, 60]} position={[-60, 15, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
 
@@ -244,22 +226,22 @@ function Car({ direction }) {
         <Box args={[10, 40, 40]} position={[-20, -35, 0]} >
           <meshStandardMaterial color={colors.black} />
         </Box>
-        <Cylinder args={[10, 10, 37, 80]} position={[0, -35, 0]} >
+        <Cylinder args={[10, 10, 37]} position={[0, -35, 0]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 25, 80]} position={[0, -30, 14]} rotation={[0, 0, Math.PI]} >
+        <Cylinder args={[5, 5, 25]} position={[0, -30, 14]} rotation={[0, 0, Math.PI]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 25, 80]} position={[0, -30, -14]} rotation={[0, 0, Math.PI]} >
+        <Cylinder args={[5, 5, 25]} position={[0, -30, -14]} rotation={[0, 0, Math.PI]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 20, 80]} position={[10, -35, 15]} rotation={[0, 0, Math.PI / 2]} >
+        <Cylinder args={[5, 5, 20]} position={[10, -35, 15]} rotation={[0, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.cream} />
         </Cylinder>
-        <Cylinder args={[5, 5, 20, 80]} position={[10, -35, -15]} rotation={[0, 0, Math.PI / 2]} >
+        <Cylinder args={[5, 5, 20]} position={[10, -35, -15]} rotation={[0, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.cream} />
         </Cylinder>
-        <Cylinder args={[16, 16, 9, 160]} position={[25, -35, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} >
+        <Cylinder args={[16, 16, 9]} position={[25, -35, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.black} />
         </Cylinder>
       </group>
@@ -268,7 +250,7 @@ function Car({ direction }) {
 
       {/* 🔩 Axle Shafts */}
       {[-50, 50].map((x) => (
-        <Cylinder key={`shaft-${x}`} args={[5, 5, 100, 800]} position={[x, -20, 0]} rotation={[Math.PI / 2, 0, 0]} >
+        <Cylinder key={`shaft-${x}`} args={[5, 5, 100]} position={[x, -20, 0]} rotation={[Math.PI / 2, 0, 0]} >
           <meshStandardMaterial color={colors.black} />
         </Cylinder>
       ))}
@@ -367,7 +349,7 @@ function Ground({ positionY = -RADIUS_Y, radius = RADIUS }) {
   return (
     <Cylinder ref={groundRef}
       position={[0, positionY, -HEIGHT / 4]}
-      args={[radius, radius, HEIGHT, 64]}
+      args={[radius, radius, HEIGHT, 100]}
       rotation={[Math.PI / 2, 0, 0]}
       castShadow
       receiveShadow
@@ -398,10 +380,10 @@ const Tree = ({ position, rotationY }) => {
   let z = position[2];
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow>
-      <Sphere position={[x - x, y - y + 50, z - z]} args={[40, 80, 80]} castShadow receiveShadow>
+      <Sphere position={[x - x, y - y + 50, z - z]} args={[40, 80]} castShadow receiveShadow>
         <meshStandardMaterial color="#66B032" />
       </Sphere>
-      <Cylinder position={[x - x, y - y, z - z]} args={[10, 10, 150, 80]} castShadow receiveShadow>
+      <Cylinder position={[x - x, y - y, z - z]} args={[10, 10, 150]} castShadow receiveShadow>
         <meshStandardMaterial color="#4d1a00" />
       </Cylinder >
     </group>
@@ -414,7 +396,7 @@ const Bush = ({ position, rotationY }) => {
   let z = position[2];
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow >
-      <Sphere args={[30, 80, 80]} castShadow receiveShadow>
+      <Sphere args={[30, 80]} castShadow receiveShadow>
         <meshStandardMaterial color="#375F1B" />
       </Sphere>
     </group>
@@ -483,9 +465,9 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
         args={[sunColor, 11, 0, 0.1]}
         position={[positionX, positionY, 0]}
         castShadow
-        shadow-mapSize={[2048, 2048]}
+        shadow-mapSize={[1024, 1024]}
         shadow-camera-near={0.1}
-        shadow-camera-far={10000}
+        shadow-camera-far={9500}
         shadow-bias={-0.005}
       />
     </Sphere>
@@ -631,6 +613,16 @@ const App = () => {
     console.log(`moveDirection = ${direction.current} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
+  const decelerateFromLeft = () => {
+    console.log(`In decelerateFromLeft direction.current = ${direction.current}`);
+    direction.current = 0;
+  };
+
+  const decelerateFromRight = () => {
+    console.log(`In decelerateFromRight direction.current = ${direction.current}`);
+    direction.current = 0;
+  };
+
   const moveRight = () => {
     console.log(`In moveRight direction.current = ${direction.current}`);
     direction.current = 1
@@ -665,7 +657,7 @@ const App = () => {
         /> */}
         {/* <fog attach="fog" args={['#efefef', 1, 2000]} /> */}
 
-        <ambientLight intensity={1} />
+        <ambientLight intensity={0.4} />
         <directionalLight
           position={[50, 50, 50]}
           intensity={1}
@@ -675,6 +667,8 @@ const App = () => {
         </directionalLight>
 
         <Sun sunColor={'#ffff00'} positionX={3 * window.innerWidth} positionY={0.5 * window.innerWidth} />
+
+        <Perf />
 
         <Car direction={direction} />
 
@@ -695,13 +689,13 @@ const App = () => {
         {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
         <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
-        {/* <OrbitControls enableZoom enablePen enableRotate /> */}
+        <OrbitControls enableZoom enablePen enableRotate />
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
-        <button onClick={moveLeft} >Left</button>
+        <button onClick={moveLeft} onMouseUp={decelerateFromLeft}>Left</button>
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-        <button onClick={moveRight} >Right</button>
+        <button onClick={moveRight} onMouseUp={decelerateFromRight}>Right</button>
       </div>
     </>
   );
