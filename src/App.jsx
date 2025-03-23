@@ -18,7 +18,7 @@ const HEIGHT = 2300; // Cylinder radius
 
 const RADIUS_Y = RADIUS + 50;
 
-const camerCood1 = [0, 110, 600];
+const camerCood1 = [0, 110, 550];
 const camerCood1WidthUnder1000 = [0, 110, 600];
 const camerCood2 = [0, 150, 450];
 const camerCood3 = [300, 150, 300];
