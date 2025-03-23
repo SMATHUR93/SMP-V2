@@ -7,8 +7,9 @@ import { Perf } from 'r3f-perf'
 
 import * as THREE from 'three';
 
-const MAX_RANGE = 150; // Movement limit
+const MAX_RANGE = 250; // Movement limit
 const SPEED = 1.9; // Movement speed
+const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
 const PERSPECTIVE_SPEED = 0.04;
 const CLOUD_SPEED = 0.005;
@@ -139,17 +140,17 @@ function Car({ direction }) {
   const [rotation, setRotation] = useState(0);
 
   useFrame(() => {
-    let newPos = position + direction.current * SPEED;
+    let newPos = position + direction * SPEED;
     if (Math.abs(newPos) > MAX_RANGE) {
       newPos = Math.sign(newPos) * MAX_RANGE; // Keep within bounds
     }
 
-    /* if (direction.current === 0 && Math.abs(newPos) > 0.01) {
+    if (direction == 0 && Math.abs(newPos) > 0.01) {
       newPos *= (1 - DAMPING); // Damp towards zero
-    } */
+    }
 
     setPosition(newPos);
-    setRotation(rotation - direction.current * SPEED * 5); // Simulate wheel rotation
+    setRotation(rotation - direction * SPEED * 5); // Simulate wheel rotation
 
     carRef.current.position.x = newPos;
     wheelRefs.current.forEach((wheel) => {
@@ -161,7 +162,7 @@ function Car({ direction }) {
     <group position={[0, -7, 0]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
-      <Cylinder args={[4, 4, 70]} position={[-60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[4, 4, 70]} position={[-60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
       <RoundedBox args={[60, 30, 70]} radius={3} position={[-30, -15, 0]} castShadow >
@@ -198,7 +199,7 @@ function Car({ direction }) {
           />
         </Sphere>
       </RoundedBox>
-      <Cylinder args={[4, 4, 70]} position={[60, -25, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[4, 4, 70]} position={[60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
 
@@ -380,10 +381,10 @@ const Tree = ({ position, rotationY }) => {
   let z = position[2];
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow>
-      <Sphere position={[x - x, y - y + 50, z - z]} args={[40, 80]} castShadow receiveShadow>
+      <Sphere position={[x - x, y - y + 100, z - z]} args={[50, 80]} castShadow receiveShadow>
         <meshStandardMaterial color="#66B032" />
       </Sphere>
-      <Cylinder position={[x - x, y - y, z - z]} args={[10, 10, 150]} castShadow receiveShadow>
+      <Cylinder position={[x - x, y - y, z - z]} args={[10, 10, 250]} castShadow receiveShadow>
         <meshStandardMaterial color="#4d1a00" />
       </Cylinder >
     </group>
@@ -459,7 +460,7 @@ function Environment({ zAxis }) {
 
 const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, positionY = 0.5 * window.innerWidth }) => {
   return (
-    <Sphere args={[200, 32, 32]} position={[positionX, positionY, 4500]}>
+    <Sphere args={[200, 32, 32]} position={[positionX, positionY, 1500]}>
       <meshStandardMaterial emissive={sunColor} emissiveIntensity={5} color={sunColor} />
       <pointLight
         args={[sunColor, 11, 0, 0.1]}
@@ -596,12 +597,14 @@ function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRo
 
 // Main Scene
 const App = () => {
-  const direction = useRef(0); // 0 = stop, 1 = right, -1 = left
+  //const direction = useRef(0); // 0 = stop, 1 = right, -1 = left
+  const [direction, setDirection] = useState(0);  // 0 = stop, 1 = right, -1 = left
   const [textIndex, setTextIndex] = useState(0);
 
   const moveLeft = () => {
     console.log(`In moveleft direction.current = ${direction.current}`);
-    direction.current = -1;
+    // direction.current = -1;
+    setDirection(-1);
     let prev = textIndex;
     let newVal = textIndex;
     if (prev == 0) {
@@ -610,22 +613,25 @@ const App = () => {
       newVal--;
     }
     setTextIndex(newVal);
-    console.log(`moveDirection = ${direction.current} , prev = ${prev} and newVal =  ${newVal}`);
+    console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
   const decelerateFromLeft = () => {
-    console.log(`In decelerateFromLeft direction.current = ${direction.current}`);
-    direction.current = 0;
+    console.log(`In decelerateFromLeft direction = ${direction}`);
+    // direction.current = 0;
+    setDirection(0);
   };
 
   const decelerateFromRight = () => {
-    console.log(`In decelerateFromRight direction.current = ${direction.current}`);
-    direction.current = 0;
+    console.log(`In decelerateFromRight direction.current = ${direction}`);
+    // direction.current = 0;
+    setDirection(0);
   };
 
   const moveRight = () => {
     console.log(`In moveRight direction.current = ${direction.current}`);
-    direction.current = 1
+    // direction.current = 1
+    setDirection(1);
     let prev = textIndex;
     let newVal = textIndex;
     if (prev == MAX_PAGES - 1) {
@@ -634,7 +640,7 @@ const App = () => {
       newVal++;
     }
     setTextIndex(newVal);
-    console.log(`moveDirection = ${direction.current} , prev = ${prev} and newVal =  ${newVal}`);
+    console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
   return (
@@ -660,13 +666,13 @@ const App = () => {
         <ambientLight intensity={0.4} />
         <directionalLight
           position={[50, 50, 50]}
-          intensity={1}
-          shadow-mapSize={[1024, 1024]}
+          intensity={1} />
+        {/* shadow-mapSize={[512, 512]}
         >
-          <orthographicCamera attach="shadow-camera" args={[-1000, 1000, 1000, -1000]} />
-        </directionalLight>
+        <orthographicCamera attach="shadow-camera" args={[-1000, 1000, 1000, -1000]} />
+      </directionalLight> */}
 
-        <Sun sunColor={'#ffff00'} positionX={3 * window.innerWidth} positionY={0.5 * window.innerWidth} />
+        <Sun sunColor={'#ffff00'} positionX={3 * window.innerWidth} positionY={0.75 * window.innerWidth} />
 
         <Car direction={direction} />
 
@@ -674,12 +680,12 @@ const App = () => {
         <Environment zAxis={1200} />
         <Environment zAxis={680} />
         <Environment zAxis={280} />
-        {/* <Environment zAxis={160} /> */}
+        <Environment zAxis={160} />
         <Environment zAxis={-200} />
         <Environment zAxis={-300} />
 
         <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
-        <Sky yAxis={-RADIUS_Y + 300} zAxis={-1200} cloudSize={60} />
+        <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
 
         <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
         {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} /> */}
@@ -692,9 +698,9 @@ const App = () => {
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
-        <button onClick={moveLeft} onMouseUp={decelerateFromLeft}>Left</button>
+        <button onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-        <button onClick={moveRight} onMouseUp={decelerateFromRight}>Right</button>
+        <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
       </div>
     </>
   );
