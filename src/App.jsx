@@ -7,7 +7,7 @@ import { Perf } from 'r3f-perf'
 
 import * as THREE from 'three';
 
-const MAX_RANGE = 250; // Movement limit
+const MAX_RANGE = window.innerWidth / 4; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
