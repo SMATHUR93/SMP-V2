@@ -3,11 +3,14 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
+import { Github, Linkedin, Copy, Check } from "lucide-react"; // Icons for copy feedback
+import { toast, Toaster } from "sonner";
+
 import { Perf } from 'r3f-perf'
 
 import * as THREE from 'three';
 
-const MAX_RANGE = window.innerWidth / 4; // Movement limit
+const MAX_RANGE = window.innerWidth / 5; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.0009; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
@@ -490,8 +493,8 @@ const texts = [
   "In 2018, I was recruited in Expedia for travel agent affiliate program ✈️",
   "In 2019, I moved to JP Morgan Chase Asset and Wealth Management Division for Connect OS Project 🏦",
   "Since 2021, I have been working in SAP Labs Concur for Invoice Managemant and Payments space. 🧑🏻‍💻",
-  "I am an alumni from Rajasthan Technical University (2010-1014)",
-  "and Birla Institue of Technology and Science(2022-204) 🎓",
+  "I am an alumni from Rajasthan Technical University (2010-2014)",
+  "and Birla Institue of Technology and Science(2022-2024) 🎓",
   "I have worked on multiple front-end & Back-end frameworks and utilites along with vast experience in Cloud Native CI/CD practices.",
   "lets connect to work together and make something cool ✌️ "
 ];
@@ -597,6 +600,39 @@ function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRo
         <meshStandardMaterial color={pageColors[idx]} />
       </Plane>;
     })
+  );
+};
+
+const SocialBar = () => {
+  const [copied, setCopied] = useState("");
+
+  const socials = [
+    { id: "github", icon: <Github size={24} />, link: "https://github.com/SMATHUR93" },
+    { id: "linkedin", icon: <Linkedin size={24} />, link: "https://www.linkedin.com/in/shrey-mathur-43366a86/" },
+  ];
+
+  const handleCopy = (link) => {
+    navigator.clipboard.writeText(link);
+    setCopied(link);
+    toast.success("Link copied to clipboard!");
+  };
+
+  return (
+    <>
+      <Toaster position="top-right" richColors />
+      <div className="fixed right-5 top-1/3 flex flex-col gap-4 bg-gray-800 p-1 rounded-lg shadow-lg">
+        {socials.map((social) => (
+          <button
+            key={social.id}
+            onClick={() => handleCopy(social.link)}
+            className="flex items-center gap-0 p-1 bg-white-500 hover:bg-white-400 rounded-md transition-all"
+          >
+            {social.icon}
+            <Copy size={18} className="text-gray-400" />
+          </button>
+        ))}
+      </div>
+    </>
   );
 };
 
@@ -707,6 +743,7 @@ const App = () => {
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
         <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
       </div>
+      <SocialBar />
     </>
   );
 };
