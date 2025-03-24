@@ -9,7 +9,7 @@ import * as THREE from 'three';
 
 const MAX_RANGE = window.innerWidth / 4; // Movement limit
 const SPEED = 1.9; // Movement speed
-const DAMPING = 0.005; // Damping factor
+const DAMPING = 0.0009; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
 const PERSPECTIVE_SPEED = 0.04;
 const CLOUD_SPEED = 0.005;
@@ -282,12 +282,17 @@ const Cloud = ({ position = [0, 0, 0], scale = [0, 0, 0], cloudSize = 20 }) => {
   }));
 
   return (
-    <group ref={cloudRef} position={position} scale={scale}>
+    <group
+      key={`${position[0]}-${position[1]}-${position[2]}`}
+      ref={cloudRef}
+      position={position}
+      scale={scale}
+    >
       {boxes.map((box, i) => {
         return (
           <mesh>
             <Box
-              key={i}
+              key={`${position[0]}-${position[1]}-${position[2]}-${i}`}
               args={[cloudSize, cloudSize, cloudSize]}
               position={box.position}
               rotation={box.rotation}
@@ -323,7 +328,7 @@ const Sky = ({ yAxis, zAxis, cloudSize }) => {
         const s = 1 + Math.random() * 2;
         return (
           <Cloud
-            key={i}
+            key={`${i}-${yAxis}-${zAxis}`}
             position={[
               Math.cos(angle) * height,
               Math.sin(angle) * height,
@@ -530,7 +535,7 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
   return (
     <Html position={textPosition} center>
       <div style={{ padding: "10px", borderRadius: "5px", width: '250px', height: '300px' }}>
-        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center' }}>{texts[idx]}</p>
+        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center' }} className="bg-blue-500 text-white p-4">{texts[idx]}</p>
       </div>
     </Html>
   );
@@ -681,7 +686,7 @@ const App = () => {
         <Environment zAxis={680} />
         <Environment zAxis={280} />
         <Environment zAxis={160} />
-        <Environment zAxis={-200} />
+        {/* <Environment zAxis={-200} /> */}
         <Environment zAxis={-300} />
 
         <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
