@@ -3,7 +3,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
-import { Github, Linkedin, Copy, Check } from "lucide-react"; // Icons for copy feedback
+import { Github, Linkedin, Copy, Check, Mail } from "lucide-react"; // Icons for copy feedback
 import { toast, Toaster } from "sonner";
 
 import { Perf } from 'r3f-perf'
@@ -607,6 +607,7 @@ const SocialBar = () => {
   const [copied, setCopied] = useState("");
 
   const socials = [
+    { id: "gmail", icon: <Mail size={24} />, link: "shreymathur93@gmail.com" },
     { id: "github", icon: <Github size={24} />, link: "https://github.com/SMATHUR93" },
     { id: "linkedin", icon: <Linkedin size={24} />, link: "https://www.linkedin.com/in/shrey-mathur-43366a86/" },
   ];
