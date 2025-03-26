@@ -164,7 +164,7 @@ function Car({ direction }) {
   });
 
   return (
-    <group position={[0, -7, 0]} ref={carRef} castShadow  >
+    <group position={[0, -7, 15]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
       <Cylinder args={[4, 4, 70]} position={[-60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
@@ -389,7 +389,7 @@ const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, 
       waves.push({
         y: positions[i + 1],
         ang: Math.random() * Math.PI * 2,
-        amp: Math.random() * 50,
+        amp: Math.random() * 15,
         speed: 0.016 + Math.random() * 0.032,
       });
     }
@@ -866,7 +866,7 @@ const App = () => {
         <Ground positionY={-RADIUS_Y} positionZ={- HEIGHT * 0.3} radius={RADIUS} height={HEIGHT} />
         {/* <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} />
         <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} /> */}
-        <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.25} radius={RADIUS * 0.99} height={HEIGHT / 5} />
+        <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.29} radius={RADIUS * 0.998} height={HEIGHT / 5} />
         {/* <Ground positionY={-RADIUS_Y} positionZ={HEIGHT / 1.5 / 2 + HEIGHT / 10} radius={RADIUS} height={HEIGHT / 2} /> */}
 
         <Environment zAxis={1000} />
