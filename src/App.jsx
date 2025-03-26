@@ -1,10 +1,12 @@
 
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
 import { Github, Linkedin, Copy, Check, Mail } from "lucide-react"; // Icons for copy feedback
 import { toast, Toaster } from "sonner";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils";
+
 
 import { Perf } from 'r3f-perf'
 
@@ -17,7 +19,7 @@ const WHEEL_ROTATION_SPEED = 0.25;
 const PERSPECTIVE_SPEED = 0.04;
 const CLOUD_SPEED = 0.005;
 const RADIUS = 5000; // Cylinder radius
-const HEIGHT = 2300; // Cylinder radius
+const HEIGHT = 1500; // Cylinder radius
 
 const RADIUS_Y = RADIUS + 50;
 
@@ -347,7 +349,7 @@ const Sky = ({ yAxis, zAxis, cloudSize }) => {
 };
 
 // Ground Component
-function Ground({ positionY = -RADIUS_Y, radius = RADIUS }) {
+function Ground({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, height = HEIGHT }) {
   // console.log("Alert:: Ground re-rendering");
   const groundRef = useRef();
   useFrame(() => {
@@ -357,8 +359,8 @@ function Ground({ positionY = -RADIUS_Y, radius = RADIUS }) {
   });
   return (
     <Cylinder ref={groundRef}
-      position={[0, positionY, -HEIGHT / 4]}
-      args={[radius, radius, HEIGHT, 100]}
+      position={[0, positionY, positionZ]}
+      args={[radius, radius, height, 100]}
       rotation={[Math.PI / 2, 0, 0]}
       castShadow
       receiveShadow
@@ -368,19 +370,174 @@ function Ground({ positionY = -RADIUS_Y, radius = RADIUS }) {
   );
 }
 
-function generateObjects(count, radius) {
-  return Array.from({ length: count }).map((_, i) => {
-    const angle = (i / count) * Math.PI * 2; //  angle = (Math.PI * 4 * i) / count;
-    const x = Math.cos(angle) * radius;
-    const z = Math.sin(angle) * radius;
-    const rotationY = Math.atan2(-z, x) + Math.PI / 2;
-    return {
-      key: i,
-      position: [x, 0, z],
-      isTree: Math.random() > 0.5,
-      rotationY: rotationY
-    };
+const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, height = HEIGHT / 100 }) => {
+  const seaRef = useRef();
+
+  // Create geometry
+  const { geom, waves } = useMemo(() => {
+    let geometry = new THREE.CylinderGeometry(radius, radius, height, 40, 10);
+    geometry.rotateX(-Math.PI / 2);
+
+    // Convert BufferGeometry and merge vertices
+    geometry = mergeVertices(geometry);
+
+    const positions = geometry.attributes.position.array;
+    console.log(positions);
+    const waves = [];
+
+    for (let i = 0; i < positions.length; i += 3) {
+      waves.push({
+        y: positions[i + 1],
+        ang: Math.random() * Math.PI * 2,
+        amp: Math.random() * 50,
+        speed: 0.016 + Math.random() * 0.032,
+      });
+    }
+
+    return { geom: geometry, waves: waves };
+  }, []);
+
+  // Animate waves
+  useFrame(({ clock }) => {
+    if (!seaRef.current) return;
+    const positions = seaRef.current.geometry.attributes.position.array;
+    const time = clock.getElapsedTime();
+
+    waves.forEach((wave, i) => {
+      positions[i * 3 + 1] = wave.y + Math.sin(time * wave.speed + wave.ang) * wave.amp;
+    });
+
+    seaRef.current.geometry.attributes.position.needsUpdate = true;
+    seaRef.current.rotation.z += PERSPECTIVE_SPEED / 4; // Slow sea rotation effect
   });
+
+  return (
+    <mesh position={[0, positionY, positionZ]} ref={seaRef} geometry={geom} receiveShadow>
+      <meshPhongMaterial color={"#3498db"} transparent opacity={0.8} flatShading />
+    </mesh>
+  );
+};
+
+// Function to create random low-poly buildings
+const Building = ({ position, width, height, depth, color }) => {
+
+  let x = position[0];
+  let y = position[1];
+  let z = position[2];
+
+  const numRows = Math.floor(height / 150);
+  const numWindowsPerRow = 2 // Math.floor(width / 150);
+  const windowSize = [width / 5, width / 5];
+
+  const windows = useMemo(() => {
+    const windowsArray = [];
+    // console.log(`width is ${width}`);
+    // console.log(`height is ${height}`);
+    // console.log(`numRows is ${numRows}`);
+    // console.log(`numWindowsPerRow is ${numWindowsPerRow}`);
+    // console.log(`windowSize is ${windowSize}`);
+
+    let initX = x - x - 140;
+    let initY = -2.5 * y;
+    let xInterval = 100;
+    let yInterval = 120;
+    for (let row = 1; row <= numRows; row++) {
+      const yOffset = initY + yInterval * row;
+      for (let col = 1; col <= numWindowsPerRow; col++) {
+        let xOffset = initX + xInterval * col;
+        windowsArray.push({ position: [xOffset, yOffset, depth / 2 + 5] });
+      }
+    }
+
+    // console.log(windowsArray);
+    return windowsArray;
+  }, [numRows, numWindowsPerRow, height, depth]);
+
+  return (
+    <mesh position={position} castShadow receiveShadow rotation={[0, Math.PI, 0]}>
+      <boxGeometry args={[width, height, depth]} />
+      <meshStandardMaterial color={color} />
+      {windows.map((win, i) => (
+        <mesh key={i} position={win.position}>
+          <planeGeometry args={windowSize} />
+          <meshStandardMaterial color={"#ffffff"} />
+        </mesh>
+      ))}
+    </mesh>
+  );
+};
+
+const Buildings = ({ position, rotationY }) => {
+
+  const buildingWidth = 200;
+  const buildingHeight = 300;
+  const buildingDepth = 50;
+
+  const buildings = useMemo(() => {
+    const colors = ["#8b5cf6", "#f59e0b", "#84cc16", "#06b6d4", "#ec4899"];
+    return Array.from({ length: 3 }).map((_, i) => {
+      const width = buildingWidth + Math.random() * buildingWidth;
+      const height = buildingHeight + Math.random() * buildingHeight / 2;
+      const depth = buildingDepth + Math.random() * buildingDepth;
+      const color = colors[i % colors.length];
+      return {
+        width,
+        height,
+        depth,
+        color,
+        position: [
+          i * 1.8 * buildingWidth - 2 * buildingWidth,
+          height / 2 - height / 3,
+          0
+        ]
+      };
+    });
+  }, []);
+
+  return (
+    <group castShadow receiveShadow position={position} rotation={[Math.PI / 2, 0, -rotationY]}>
+      {buildings.map((b, i) => (
+        <Building key={i} {...b} />
+      ))}
+    </group>
+  );
+}
+
+// Trees and Bushes Component
+function CityScape({ zAxis }) {
+
+  const objectsRef = useRef();
+  const radius = RADIUS;
+  const numObjects = 4;
+  useFrame(() => {
+    if (objectsRef.current) {
+      objectsRef.current.rotation.y += CLOUD_SPEED;
+    }
+  });
+
+  const objectsRefs = useRef([]);
+
+  return (
+    <group ref={objectsRef} position={[0, - RADIUS - 30, -zAxis]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+      {
+        Array.from({ length: numObjects }).map((_, key) => {
+          const angle = (key / numObjects) * Math.PI * 2; // Distribute evenly
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+
+          // Correct outward-facing rotation
+          const rotationY = Math.atan2(-z, x) + Math.PI / 2;
+
+          return (<Buildings
+            ref={(el) => (objectsRefs.current[key] = el)}
+            key={key}
+            position={[x, 0, z]}
+            rotationY={rotationY}
+          />);
+        })
+      }
+    </group>
+  );
 }
 
 const Tree = ({ position, rotationY }) => {
@@ -400,9 +557,6 @@ const Tree = ({ position, rotationY }) => {
 };
 
 const Bush = ({ position, rotationY }) => {
-  let x = position[0];
-  let y = position[1];
-  let z = position[2];
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow >
       <Sphere args={[30, 80]} castShadow receiveShadow>
@@ -414,8 +568,6 @@ const Bush = ({ position, rotationY }) => {
 
 // Trees and Bushes Component
 function Environment({ zAxis }) {
-  const objects = generateObjects(Math.abs(zAxis / 5), RADIUS);
-  // console.log(objects);
 
   const objectsRef = useRef();
   const radius = RADIUS;
@@ -424,11 +576,6 @@ function Environment({ zAxis }) {
     if (objectsRef.current) {
       objectsRef.current.rotation.y += CLOUD_SPEED;
     }
-    /* objectsRefs.current.forEach((object) => {
-      if (object) {
-        object.rotation.z += 0.005;
-      }
-    }); */
   });
 
   const objectsRefs = useRef([]);
@@ -444,9 +591,6 @@ function Environment({ zAxis }) {
           // Correct outward-facing rotation
           const rotationY = Math.atan2(-z, x) + Math.PI / 2;
           const isTree = Math.random() > 0.5;
-
-          /* return <RotatedObject key={i} position={[x, 0, z]} rotationY={rotationY} />; */
-
 
           return (
             isTree ? (<Tree
@@ -523,7 +667,7 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    console.log("In BackgroundText, UseEffect");
+    // console.log("In BackgroundText, UseEffect");
     setIdx(textIndex);
   }, [textIndex]);
 
@@ -548,7 +692,7 @@ function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotat
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    console.log("In ForegroundText, UseEffect");
+    // console.log("In ForegroundText, UseEffect");
     setIdx(textIndex);
   }, [textIndex]);
 
@@ -588,7 +732,7 @@ function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRo
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
-    console.log("In Pages, UseEffect");
+    // console.log("In Pages, UseEffect");
     setIdx(textIndex);
   }, [textIndex]);
 
@@ -644,7 +788,7 @@ const App = () => {
   const [textIndex, setTextIndex] = useState(0);
 
   const moveLeft = () => {
-    console.log(`In moveleft direction.current = ${direction.current}`);
+    // console.log(`In moveleft direction.current = ${direction.current}`);
     // direction.current = -1;
     setDirection(-1);
     let prev = textIndex;
@@ -655,23 +799,23 @@ const App = () => {
       newVal--;
     }
     setTextIndex(newVal);
-    console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
+    // console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
   const decelerateFromLeft = () => {
-    console.log(`In decelerateFromLeft direction = ${direction}`);
+    // console.log(`In decelerateFromLeft direction = ${direction}`);
     // direction.current = 0;
     setDirection(0);
   };
 
   const decelerateFromRight = () => {
-    console.log(`In decelerateFromRight direction.current = ${direction}`);
+    // console.log(`In decelerateFromRight direction.current = ${direction}`);
     // direction.current = 0;
     setDirection(0);
   };
 
   const moveRight = () => {
-    console.log(`In moveRight direction.current = ${direction.current}`);
+    // console.log(`In moveRight direction.current = ${direction.current}`);
     // direction.current = 1
     setDirection(1);
     let prev = textIndex;
@@ -682,7 +826,7 @@ const App = () => {
       newVal++;
     }
     setTextIndex(newVal);
-    console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
+    // console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
   return (
@@ -718,15 +862,22 @@ const App = () => {
 
         <Car direction={direction} />
 
-        <Ground positionY={-RADIUS_Y} radius={RADIUS} />
-        <Environment zAxis={1200} />
-        <Environment zAxis={680} />
-        <Environment zAxis={280} />
-        <Environment zAxis={160} />
-        {/* <Environment zAxis={-200} /> */}
-        <Environment zAxis={-300} />
+        {/* <Sea positionY={-RADIUS_Y} positionZ={-1500} radius={RADIUS} height={HEIGHT / 100} /> */}
+        <Ground positionY={-RADIUS_Y} positionZ={- HEIGHT * 0.3} radius={RADIUS} height={HEIGHT} />
+        {/* <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} />
+        <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} /> */}
+        <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.25} radius={RADIUS * 0.99} height={HEIGHT / 5} />
+        {/* <Ground positionY={-RADIUS_Y} positionZ={HEIGHT / 1.5 / 2 + HEIGHT / 10} radius={RADIUS} height={HEIGHT / 2} /> */}
 
-        <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
+        <Environment zAxis={1000} />
+        {/* <Environment zAxis={680} /> */}
+        <Environment zAxis={280} />
+        {/* <Environment zAxis={160} /> */}
+        <CityScape zAxis={1500} />
+        {/* <Environment zAxis={-200} /> */}
+        {/* <Environment zAxis={-300} /> */}
+
+        {/* <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} /> */}
         <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
 
         <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
@@ -735,13 +886,14 @@ const App = () => {
         {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
         <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
-        {/* <OrbitControls enableZoom enablePen enableRotate />
-        <Perf /> */}
+        {/* <OrbitControls enableZoom enablePen enableRotate /> */}
+        {/* <Perf /> */}
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
         <button onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
+        <button onClick={() => setTextIndex(0)}> Pause ⏸️</button>
         <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
       </div>
       <SocialBar />
