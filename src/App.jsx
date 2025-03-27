@@ -1,6 +1,7 @@
 
 
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
+import { CarContext } from "./context/CarContext";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
 import { Github, Linkedin, Copy, Check, Mail } from "lucide-react"; // Icons for copy feedback
@@ -16,10 +17,12 @@ const MAX_RANGE = window.innerWidth / 5; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.0009; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
-const PERSPECTIVE_SPEED = 0.01;
+const GROUND_SPEED = 0.03;
+const SEA_SPEED = 0.007;
+const CITY_SCAPE_SPEED = 0.003;
 const CLOUD_SPEED = 0.005;
 const RADIUS = 5000; // Cylinder radius
-const HEIGHT = 1500; // Cylinder radius
+const HEIGHT = 2500; // Cylinder radius
 
 const RADIUS_Y = RADIUS + 50;
 
@@ -43,10 +46,11 @@ const colors = {
 
 const DriverHead = ({ position }) => {
   const hairsTopRef = useRef();// < THREE.Object3D > (null);
+  const { pause } = useContext(CarContext);
   let angleHairs = useRef(0);
 
   useFrame(() => {
-    if (hairsTopRef.current) {
+    if (hairsTopRef.current && pause == false) {
       hairsTopRef.current.children.forEach((h, i) => {
         h.scale.y = 0.75 + Math.cos(angleHairs.current + i / 3) * 0.25;
       });
@@ -109,12 +113,15 @@ const DriverHead = ({ position }) => {
 
 export function Wheel({ position, rotationSpeed }) {
   const wheelRef = useRef();
+  const { pause } = useContext(CarContext);
 
   // Load texture for the tyre
   // const tyreTexture = useLoader(TextureLoader, "/textures/tyre-texture.jpg");
 
   useFrame(() => {
-    wheelRef.current.rotation.z += -rotationSpeed; // Simulating rolling motion
+    if (pause == false) {
+      wheelRef.current.rotation.z += -rotationSpeed; // Simulating rolling motion
+    }
   });
 
   return (
@@ -139,28 +146,31 @@ export function Wheel({ position, rotationSpeed }) {
 
 // Car Component
 function Car({ direction }) {
+  const { pause } = useContext(CarContext);
   const carRef = useRef();
   const wheelRefs = useRef([]);
   const [position, setPosition] = useState(0);
   const [rotation, setRotation] = useState(0);
 
   useFrame(() => {
-    let newPos = position + direction * SPEED;
-    if (Math.abs(newPos) > MAX_RANGE) {
-      newPos = Math.sign(newPos) * MAX_RANGE; // Keep within bounds
+    if (pause == false) {
+      let newPos = position + direction * SPEED;
+      if (Math.abs(newPos) > MAX_RANGE) {
+        newPos = Math.sign(newPos) * MAX_RANGE; // Keep within bounds
+      }
+
+      if (direction == 0 && Math.abs(newPos) > 0.01) {
+        newPos *= (1 - DAMPING); // Damp towards zero
+      }
+
+      setPosition(newPos);
+      setRotation(rotation - direction * SPEED * 5); // Simulate wheel rotation
+
+      carRef.current.position.x = newPos;
+      wheelRefs.current.forEach((wheel) => {
+        if (wheel) wheel.rotation.y = rotation;
+      });
     }
-
-    if (direction == 0 && Math.abs(newPos) > 0.01) {
-      newPos *= (1 - DAMPING); // Damp towards zero
-    }
-
-    setPosition(newPos);
-    setRotation(rotation - direction * SPEED * 5); // Simulate wheel rotation
-
-    carRef.current.position.x = newPos;
-    wheelRefs.current.forEach((wheel) => {
-      if (wheel) wheel.rotation.y = rotation;
-    });
   });
 
   return (
@@ -227,7 +237,7 @@ function Car({ direction }) {
       </Cylinder>
 
       <group position={[-30, 50, 0]}  >
-        <DriverHead position={[0, -9, 0]} />
+        <DriverHead position={[0, -9, 0]} puase={pause} />
 
         <Box args={[10, 40, 40]} position={[-20, -35, 0]} >
           <meshStandardMaterial color={colors.black} />
@@ -316,11 +326,16 @@ const Cloud = ({ position = [0, 0, 0], scale = [0, 0, 0], cloudSize = 20 }) => {
 
 const Sky = ({ yAxis, zAxis, cloudSize }) => {
   const skyRef = useRef();
+  const { pause } = useContext(CarContext);
   useFrame(() => {
     if (skyRef.current) {
       // skyRef.current.rotation.x += 0.01;
       // skyRef.current.rotation.y += 0.01;
-      skyRef.current.rotation.z += CLOUD_SPEED;
+      if (pause == false) {
+        skyRef.current.rotation.z += CLOUD_SPEED;
+      } else {
+        skyRef.current.rotation.z += CLOUD_SPEED / 10;
+      }
     }
   });
   const numClouds = 25;
@@ -352,9 +367,10 @@ const Sky = ({ yAxis, zAxis, cloudSize }) => {
 function Ground({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, height = HEIGHT }) {
   // console.log("Alert:: Ground re-rendering");
   const groundRef = useRef();
+  const { pause } = useContext(CarContext);
   useFrame(() => {
-    if (groundRef.current) {
-      groundRef.current.rotation.y += PERSPECTIVE_SPEED;
+    if (groundRef.current && pause == false) {
+      groundRef.current.rotation.y += GROUND_SPEED;
     }
   });
   return (
@@ -372,6 +388,7 @@ function Ground({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIU
 
 const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, height = HEIGHT / 100 }) => {
   const seaRef = useRef();
+  const { pause } = useContext(CarContext);
 
   // Create geometry
   const { geom, waves } = useMemo(() => {
@@ -399,16 +416,24 @@ const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, 
 
   // Animate waves
   useFrame(({ clock }) => {
-    if (!seaRef.current) return;
-    const positions = seaRef.current.geometry.attributes.position.array;
-    const time = clock.getElapsedTime();
+    if (!seaRef.current) {
+      return;
+    } else {
+      const positions = seaRef.current.geometry.attributes.position.array;
+      const time = clock.getElapsedTime();
 
-    waves.forEach((wave, i) => {
-      positions[i * 3 + 1] = wave.y + Math.sin(time * wave.speed + wave.ang) * wave.amp;
-    });
+      waves.forEach((wave, i) => {
+        positions[i * 3 + 1] = wave.y + Math.sin(time * wave.speed + wave.ang) * wave.amp;
+      });
 
-    seaRef.current.geometry.attributes.position.needsUpdate = true;
-    seaRef.current.rotation.z += PERSPECTIVE_SPEED / 5; // Slow sea rotation effect
+      seaRef.current.geometry.attributes.position.needsUpdate = true;
+      if (pause == false) {
+        seaRef.current.rotation.z += SEA_SPEED; // Slow sea rotation effect
+      } else {
+        seaRef.current.rotation.z += SEA_SPEED / 10; // Really Slow sea rotation effect
+      }
+
+    }
   });
 
   return (
@@ -486,7 +511,7 @@ const Buildings = ({ position, rotationY }) => {
         depth,
         color,
         position: [
-          i * 1.8 * buildingWidth - 2 * buildingWidth,
+          i * 1.9 * buildingWidth - 2 * buildingWidth,
           height / 2 - height / 3,
           0
         ]
@@ -507,11 +532,13 @@ const Buildings = ({ position, rotationY }) => {
 function CityScape({ zAxis }) {
 
   const objectsRef = useRef();
+  const { pause } = useContext(CarContext);
+
   const radius = RADIUS;
   const numObjects = 4;
   useFrame(() => {
-    if (objectsRef.current) {
-      objectsRef.current.rotation.y += CLOUD_SPEED / 2;
+    if (objectsRef.current && pause == false) {
+      objectsRef.current.rotation.y += CITY_SCAPE_SPEED;
     }
   });
 
@@ -570,10 +597,12 @@ const Bush = ({ position, rotationY }) => {
 function Environment({ zAxis }) {
 
   const objectsRef = useRef();
+  const { pause } = useContext(CarContext);
+
   const radius = RADIUS;
-  const numObjects = Math.abs(zAxis / 10);
+  const numObjects = Math.abs(radius / 100);
   useFrame(() => {
-    if (objectsRef.current) {
+    if (objectsRef.current && pause == false) {
       objectsRef.current.rotation.y += CLOUD_SPEED;
     }
   });
@@ -783,9 +812,15 @@ const SocialBar = () => {
 
 // Main Scene
 const App = () => {
-  //const direction = useRef(0); // 0 = stop, 1 = right, -1 = left
-  const [direction, setDirection] = useState(0);  // 0 = stop, 1 = right, -1 = left
-  const [textIndex, setTextIndex] = useState(0);
+  const [fogEnabled, setFogEnabled] = useState(false);
+
+  const {
+    setPause,
+    direction,
+    setDirection,
+    textIndex,
+    setTextIndex
+  } = useContext(CarContext);
 
   const moveLeft = () => {
     // console.log(`In moveleft direction.current = ${direction.current}`);
@@ -847,7 +882,7 @@ const App = () => {
           position={[0, 900, 900]}
           args={[80, window.innerWidth / window.innerHeight, 0.1, 10000]}
         /> */}
-        {/* <fog attach="fog" args={['#efefef', 1, 2000]} /> */}
+        {fogEnabled == true ? <fog attach="fog" args={['#efefef', HEIGHT * 0.7, 3000]} /> : <></>}
 
         <ambientLight intensity={0.4} />
         <directionalLight
@@ -858,26 +893,20 @@ const App = () => {
         <orthographicCamera attach="shadow-camera" args={[-1000, 1000, 1000, -1000]} />
       </directionalLight> */}
 
-        <Sun sunColor={'#ffff00'} positionX={3 * window.innerWidth} positionY={0.75 * window.innerWidth} />
+        <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} />
 
-        <Car direction={direction} />
+
 
         {/* <Sea positionY={-RADIUS_Y} positionZ={-1500} radius={RADIUS} height={HEIGHT / 100} /> */}
-        <Ground positionY={-RADIUS_Y} positionZ={- HEIGHT * 0.3} radius={RADIUS} height={HEIGHT} />
-        {/* <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} />
-        <Ground positionY={-RADIUS_Y} positionZ={0} radius={RADIUS}  height={HEIGHT} /> */}
-        <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.29} radius={RADIUS * 0.998} height={HEIGHT / 5} />
-        {/* <Ground positionY={-RADIUS_Y} positionZ={HEIGHT / 1.5 / 2 + HEIGHT / 10} radius={RADIUS} height={HEIGHT / 2} /> */}
+        <CityScape zAxis={HEIGHT * 0.9} />
+        <Environment zAxis={HEIGHT * 0.5} />
+        <Environment zAxis={HEIGHT * 0.2} />
+        <Ground positionY={-RADIUS_Y} positionZ={- HEIGHT * 0.5 + HEIGHT * 0.1} radius={RADIUS} height={HEIGHT} />
+        <Car direction={direction} />
+        <Environment zAxis={-HEIGHT * 0.07} />
+        <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.2} radius={RADIUS * 0.998} height={HEIGHT / 5} />
 
-        <Environment zAxis={1000} />
-        {/* <Environment zAxis={680} /> */}
-        <Environment zAxis={280} />
-        {/* <Environment zAxis={160} /> */}
-        <CityScape zAxis={1500} />
-        {/* <Environment zAxis={-200} /> */}
-        {/* <Environment zAxis={-300} /> */}
-
-        {/* <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} /> */}
+        <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
         <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
 
         <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
@@ -886,14 +915,14 @@ const App = () => {
         {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
         <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
-        {/* <OrbitControls enableZoom enablePen enableRotate /> */}
-        {/* <Perf /> */}
+        {/* <OrbitControls enableZoom enablePen enableRotate />
+        <Perf /> */}
 
       </Canvas >
       <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
         <button onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-        <button onClick={() => setTextIndex(0)}> Pause ⏸️</button>
+        <button onClick={() => setPause(prevPause => !prevPause)}> Pause ⏸️</button>
         <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
       </div>
       <SocialBar />
