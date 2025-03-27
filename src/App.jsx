@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
 import { CarContext } from "./context/CarContext";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
 import { Github, Linkedin, Copy, Check, Mail } from "lucide-react"; // Icons for copy feedback
 import { toast, Toaster } from "sonner";
@@ -15,7 +15,7 @@ import * as THREE from 'three';
 
 const MAX_RANGE = window.innerWidth / 5; // Movement limit
 const SPEED = 1.9; // Movement speed
-const DAMPING = 0.0009; // Damping factor
+const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
 const GROUND_SPEED = 0.03;
 const SEA_SPEED = 0.007;
@@ -656,6 +656,103 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
   );
 }
 
+// 🎇 Shooting Star Component
+const ShootingStar = () => {
+  const starRef = useRef();
+  const [position, setPosition] = useState([0, 0, 0]);
+  const [opacity, setOpacity] = useState(1);
+  const [active, setActive] = useState(false);
+
+  useEffect(() => {
+    // Randomly position shooting star in the sky
+    setPosition([
+      Math.random() * 600 - 300, // X-axis (random left/right)
+      Math.random() * 300 + 100, // Y-axis (high in sky)
+      Math.random() * -300, // Z-axis (random depth)
+    ]);
+
+    setActive(true);
+  }, []);
+
+  useFrame(({ clock }) => {
+    if (!active) return;
+
+    if (starRef.current) {
+      // Move star diagonally
+      starRef.current.position.x += 15;
+      starRef.current.position.y -= 10;
+      setOpacity((prev) => Math.max(prev - 0.1, 0)); // Fade out
+
+      // Remove star after 1 frame
+      if (opacity <= 0.1) {
+        setActive(false);
+      }
+    }
+  });
+
+  return (
+    active && (
+      <mesh ref={starRef} position={position}>
+        <planeGeometry args={[10, 2]} />
+        <meshBasicMaterial color="white" transparent opacity={opacity} />
+      </mesh>
+    )
+  );
+};
+
+const Lights = ({ index = 0 }) => {
+  const lightConfig = skyPresets[index].light;
+  return <directionalLight position={[5, 10, 5]} intensity={lightConfig.intensity} color={lightConfig.color} />;
+};
+
+/* const Background = ({ index = 0 }) => {
+  const { scene } = useThree();
+
+  useFrame(() => {
+    const colors = skyPresets[index].colors;
+    scene.background = new THREE.Color(colors[0]); // Main color
+    // scene.fog = new THREE.Fog(colors[1], 500, 1500); // Fog for depth effect
+  });
+
+  return null;
+}; */
+
+// 🎨 Sky gradient presets & lighting configurations
+const skyPresets = [
+
+  { name: "Dawn 0500-0700", colors: ["linear-gradient(to bottom, #FFB75E, #FFA647, #FF7F50, #FF4500)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+  { name: "Early Morning 0700-0900", colors: ["#linear-gradient(to bottom, #FFEC82, #FFD700, #FFAA00, #FF8C00)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Morning Sky 0900-1100", colors: ["linear-gradient(to bottom, #C1E1DC, #84C0C6, #5BADC1, #3182C8)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Late Morning 1100-1300", colors: ["linear-gradient(to bottom, #87CEEB, #63B8FF, #4682B4, #1E90FF)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Noon 1300-1500", colors: ["linear-gradient(to bottom, #A2C3F1, #6099D8, #2D6CC0, #124BAD)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Afternoon Heat 1500-1700", colors: ["linear-gradient(to bottom, #FFA500, #FF8C00, #FF4500, #B22222)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Sunset 1700-1900", colors: ["linear-gradient(to bottom, #FFD700, #FFAA00, #FF8C00, #FF4500)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Dusk 1900-2100", colors: ["linear-gradient(to bottom, #FFA07A, #DC143C, #8B0000, #660000)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Early Night 2100-2300", colors: ["linear-gradient(to bottom, #003366, #002B55, #001F40, #00122A)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Midnight 2300-0100", colors: ["linear-gradient(to bottom, #191970, #000080, #00008B, #000033)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Deep Night 0100-0300", colors: ["linear-gradient(to bottom, #11002F, #330066, #660099, #9900CC)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Pre-Dawn Darkness 0300-0500 ", colors: ["linear-gradient(to bottom, #080808, #0C0C0C, #101010, #141414)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Last", colors: ["linear-gradient(to bottom, #EFEFEF, #AAAAAA, #555555, #000000)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+];
+
+/* const skyPresets = [
+
+  { name: "Dawn 5-7", colors: ["linear-gradient(135deg, #f79561, #d5b869, #b4db72, #92fe7a)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+  { name: "Early Morning 7-9", colors: ["linear-gradient(135deg, #d6e6ff, #d7f9f8, #fbe0e0, #d3bae3)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Morning Sky 9-11", colors: ["linear-gradient(135deg, #76e29d, #50dabb, #29d2d8, #03caf6)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Late Morning 11-13", colors: ["linear-gradient(135deg, #e2416f, #e26869, #e29063, #e2b75d)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Noon 13-15", colors: ["linear-gradient(135deg, #cc9b6d, #f1ca89, #f2dac3, #c8c2bc)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Afternoon Heat 15-17", colors: ["linear-gradient(135deg, #fde992, #ffcc85, #ff8a5b, #d63d24)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Sunset 17-19", colors: ["linear-gradient(135deg, #344a9c, #306bb3, #2c8aca, #28aae1)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Dusk 19-21", colors: ["linear-gradient(135deg, #bff5ef, #fad898, #ffeecb, #ebe6ef)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Early Night 2 21-23", colors: ["linear-gradient(135deg, #13521e, #1f8531, #2bb843, #36eb56)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Midnight 23-1", colors: ["linear-gradient(135deg, #411bff, #afebe5, #a3d5f0, #d6dfe3)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Deep Night 1-3", colors: ["linear-gradient(135deg, #371b58, #4c3575, #5b4b8a, #7858a6)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Pre-Dawn Darkness 3-5 ", colors: ["linear-gradient(135deg, #e855a7, #8765e4, #ab4edf, #9d35da)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Last", colors: ["linear-gradient(to bottom, #EFEFEF, #AAAAAA, #555555, #000000)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+]; */
+
+
 const texts = [
   "Hi, My Name is Shrey 👋",
   "Welcome to my Little Interactive Portfolio 🤗",
@@ -794,7 +891,7 @@ const SocialBar = () => {
   return (
     <>
       <Toaster position="top-right" richColors />
-      <div className="fixed right-5 top-1/3 flex flex-col gap-4 bg-gray-800 p-1 rounded-lg shadow-lg">
+      <div className="fixed right-5 top-1/3 flex flex-col gap-1 bg-gray-800 p-1 rounded-md shadow-md">
         {socials.map((social) => (
           <button
             key={social.id}
@@ -872,11 +969,13 @@ const App = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        background: 'linear-gradient(#DAD4F7, #FFFFFF)'
+        background: `${skyPresets[textIndex].colors[0]}` // 'linear-gradient(#DAD4F7, #FFFFFF)'
       }}
         shadows onCreated={({ gl }) => { gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap; }}
         camera={{ position: camerCood1, fov: 80, near: 1, far: 10000, aspect: window.innerWidth / window.innerHeight }}
       >
+        <Lights index={textIndex} />
+        {/* <Background index={textIndex} /> */}
         {/* <PerspectiveCamera
           rotation={[0, 0, 0]}
           position={[0, 900, 900]}
@@ -894,10 +993,9 @@ const App = () => {
       </directionalLight> */}
 
         <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} />
+        <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
+        <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
 
-
-
-        {/* <Sea positionY={-RADIUS_Y} positionZ={-1500} radius={RADIUS} height={HEIGHT / 100} /> */}
         <CityScape zAxis={HEIGHT * 0.9} />
         <Environment zAxis={HEIGHT * 0.5} />
         <Environment zAxis={HEIGHT * 0.2} />
@@ -905,9 +1003,6 @@ const App = () => {
         <Car direction={direction} />
         <Environment zAxis={-HEIGHT * 0.07} />
         <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.2} radius={RADIUS * 0.998} height={HEIGHT / 5} />
-
-        <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
-        <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
 
         <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
         {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} /> */}
@@ -924,6 +1019,7 @@ const App = () => {
         <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
         <button onClick={() => setPause(prevPause => !prevPause)}> Pause ⏸️</button>
         <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
+        <button>{skyPresets[textIndex].name}</button>
       </div>
       <SocialBar />
     </>
