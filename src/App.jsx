@@ -16,7 +16,7 @@ const MAX_RANGE = window.innerWidth / 5; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.0009; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
-const PERSPECTIVE_SPEED = 0.04;
+const PERSPECTIVE_SPEED = 0.01;
 const CLOUD_SPEED = 0.005;
 const RADIUS = 5000; // Cylinder radius
 const HEIGHT = 1500; // Cylinder radius
@@ -408,7 +408,7 @@ const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, 
     });
 
     seaRef.current.geometry.attributes.position.needsUpdate = true;
-    seaRef.current.rotation.z += PERSPECTIVE_SPEED / 4; // Slow sea rotation effect
+    seaRef.current.rotation.z += PERSPECTIVE_SPEED / 5; // Slow sea rotation effect
   });
 
   return (
@@ -511,7 +511,7 @@ function CityScape({ zAxis }) {
   const numObjects = 4;
   useFrame(() => {
     if (objectsRef.current) {
-      objectsRef.current.rotation.y += CLOUD_SPEED;
+      objectsRef.current.rotation.y += CLOUD_SPEED / 2;
     }
   });
 
