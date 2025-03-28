@@ -10,7 +10,6 @@ import { toast, Toaster } from "sonner";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils";
 import { Points, PointMaterial, Preload } from "@react-three/drei";
 import * as random from "maath/random/dist/maath-random.esm";
-import { useSpring, a } from "@react-spring/three";
 
 import { Perf } from 'r3f-perf'
 
@@ -951,26 +950,18 @@ const ScreenMessage = () => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  if (!showMessage) return null;
+  if (!showMessage) {
+    return null;
+  }
 
   return (
-    <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
-      <button
-        onClick={() => setShowControls((prev) => !prev)}
-        className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
-      >
-        {showControls ? "Hide Controls" : "Show Controls"}
-      </button>
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm shadow-md animate-fadeIn">
-        🔍 Best viewed on a larger screen!
-      </div>
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm shadow-md animate-fadeIn">
+      🔍 Best viewed on a larger screen!
     </div>
-
   );
 }
 
 const SceneCamera = ({ targetPosition }) => {
-  console.log(targetPosition);
 
   const { camera, size } = useThree();
   const target = useRef(new THREE.Vector3(...targetPosition));
@@ -1153,6 +1144,36 @@ const App = () => {
           </button>
         </div>
       )}
+      <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
+        {showControls && (
+          <>
+            <button className="btn-control" onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
+            <button className="btn-control" onClick={() => setTextIndex(0)}>Start Over ⏎</button>
+            <button className="btn-control" onClick={() => setPause(prevState => !prevState)}> Pause ⏸️</button>
+            <button className="btn-control" onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
+            <button className="btn-control" onClick={() => setCarLights(prevState => !prevState)}> Car Lights 💡</button>
+
+
+            <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
+            <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
+            <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞</button>
+            <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
+
+            <button className="btn-control" onClick={() => setCameraPosition(camerCood1)}> Camera 1 </button>
+            <button className="btn-control" onClick={() => setCameraPosition(camerCood2)}> Camera 2 </button>
+            <button className="btn-control" onClick={() => setCameraPosition(camerCood3)}> Camera 3 </button>
+
+            <label className="text-white mt-2 ml-2 text-base font-semibold">{skyPresets[textIndex].name}</label>
+          </>
+        )}
+        <button
+          onClick={() => setShowControls((prev) => !prev)}
+          className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+        >
+          {showControls ? "Hide Controls" : "Show Controls"}
+        </button>
+      </div>
+
       {/* Show/Hide Controls Button */}
       <ScreenMessage />
       <SocialBar />
