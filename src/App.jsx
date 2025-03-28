@@ -2,18 +2,21 @@
 
 import React, { useRef, useState, useEffect, useMemo, useContext } from "react";
 import { CarContext } from "./context/CarContext";
+import { WorldContext } from "./context/WorldContext";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Box, OrbitControls, Cylinder, Text, Sphere, RoundedBox, Plane, PerspectiveCamera, Html } from "@react-three/drei";
 import { Github, Linkedin, Copy, Check, Mail } from "lucide-react"; // Icons for copy feedback
 import { toast, Toaster } from "sonner";
 import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils";
-
+import { Points, PointMaterial, Preload } from "@react-three/drei";
+import * as random from "maath/random/dist/maath-random.esm";
+import { useSpring, a } from "@react-spring/three";
 
 import { Perf } from 'r3f-perf'
 
 import * as THREE from 'three';
 
-const MAX_RANGE = window.innerWidth / 5; // Movement limit
+const MAX_RANGE = window.innerWidth / 7; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
@@ -22,7 +25,7 @@ const SEA_SPEED = 0.007;
 const CITY_SCAPE_SPEED = 0.003;
 const CLOUD_SPEED = 0.005;
 const RADIUS = 5000; // Cylinder radius
-const HEIGHT = 2500; // Cylinder radius
+const HEIGHT = 3500; // Cylinder radius
 
 const RADIUS_Y = RADIUS + 50;
 
@@ -146,7 +149,10 @@ export function Wheel({ position, rotationSpeed }) {
 
 // Car Component
 function Car({ direction }) {
-  const { pause } = useContext(CarContext);
+  const {
+    pause,
+    carLights
+  } = useContext(CarContext);
   const carRef = useRef();
   const wheelRefs = useRef([]);
   const [position, setPosition] = useState(0);
@@ -174,7 +180,7 @@ function Car({ direction }) {
   });
 
   return (
-    <group position={[0, -7, 15]} ref={carRef} castShadow  >
+    <group position={[0, -9, 15]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
       <Cylinder args={[4, 4, 70]} position={[-60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
@@ -190,28 +196,28 @@ function Car({ direction }) {
 
         <Sphere args={[3]} position={[30, 10, 20]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
-          <pointLight
-            args={['#ff0000', 10, 0, 0.3]}
+          {carLights == true ? <pointLight
+            args={['#ffff00', 10, 1000, 0.2]}
             position={[0, 0, 0]}
             castShadow
             shadow-mapSize={[1024, 1024]}
             shadow-camera-near={0.1}
             shadow-camera-far={100}
             shadow-bias={-0.005}
-          />
+          /> : <></>}
         </Sphere>
 
         <Sphere args={[3]} position={[30, 10, -20]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
-          <pointLight
-            args={['#ff0000', 10, 0, 0.3]}
+          {carLights == true ? <pointLight
+            args={['#ffff00', 10, 1000, 0.2]}
             position={[0, 0, 0]}
             castShadow
             shadow-mapSize={[1024, 1024]}
             shadow-camera-near={0.1}
             shadow-camera-far={100}
             shadow-bias={-0.005}
-          />
+          /> : <></>}
         </Sphere>
       </RoundedBox>
       <Cylinder args={[4, 4, 70]} position={[60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
@@ -399,7 +405,6 @@ const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, 
     geometry = mergeVertices(geometry);
 
     const positions = geometry.attributes.position.array;
-    console.log(positions);
     const waves = [];
 
     for (let i = 0; i < positions.length; i += 3) {
@@ -496,7 +501,7 @@ const Buildings = ({ position, rotationY }) => {
 
   const buildingWidth = 200;
   const buildingHeight = 300;
-  const buildingDepth = 50;
+  const buildingDepth = 150;
 
   const buildings = useMemo(() => {
     const colors = ["#8b5cf6", "#f59e0b", "#84cc16", "#06b6d4", "#ec4899"];
@@ -656,6 +661,31 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
   );
 }
 
+const Stars = ({ positionY = HEIGHT * 0.5, positionZ = -2 * HEIGHT, skyRadius = 1.5 * RADIUS, starRadius = 20, noOfStars = 5000 }) => {
+  const ref = useRef();
+  const [sphere] = useState(() => random.inSphere(new Float32Array(noOfStars), { radius: skyRadius }));
+
+  useFrame((state, delta) => {
+    ref.current.rotation.x -= delta / 10;
+    ref.current.rotation.y -= delta / 15;
+  });
+
+  return (
+    <group position={[0, positionY, positionZ]} rotation={[0, 0, Math.PI / 4]}>
+      <Points ref={ref} positions={sphere} stride={3} frustumCulled >
+        <PointMaterial
+          transparent
+          color='#ffff00'
+          emissive='#ffff00'
+          size={starRadius}
+          sizeAttenuation={true}
+          depthWrite={false}
+        />
+      </Points>
+    </group>
+  );
+};
+
 // 🎇 Shooting Star Component
 const ShootingStar = () => {
   const starRef = useRef();
@@ -705,17 +735,17 @@ const Lights = ({ index = 0 }) => {
   return <directionalLight position={[5, 10, 5]} intensity={lightConfig.intensity} color={lightConfig.color} />;
 };
 
-/* const Background = ({ index = 0 }) => {
+const Background = ({ index = 0 }) => {
   const { scene } = useThree();
 
   useFrame(() => {
     const colors = skyPresets[index].colors;
     scene.background = new THREE.Color(colors[0]); // Main color
-    // scene.fog = new THREE.Fog(colors[1], 500, 1500); // Fog for depth effect
+    scene.fog = new THREE.Fog(colors[1], 500, 1500); // Fog for depth effect
   });
 
   return null;
-}; */
+};
 
 // 🎨 Sky gradient presets & lighting configurations
 const skyPresets = [
@@ -907,17 +937,89 @@ const SocialBar = () => {
   );
 };
 
+const ScreenMessage = () => {
+  const { showMessage, setShowMessage } = useContext(WorldContext);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setShowMessage(window.innerWidth < 768); // Show message if width is less than 768px (tablet/mobile)
+    };
+
+    checkScreenSize(); // Run on mount
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
+  if (!showMessage) return null;
+
+  return (
+    <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
+      <button
+        onClick={() => setShowControls((prev) => !prev)}
+        className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+      >
+        {showControls ? "Hide Controls" : "Show Controls"}
+      </button>
+      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm shadow-md animate-fadeIn">
+        🔍 Best viewed on a larger screen!
+      </div>
+    </div>
+
+  );
+}
+
+const SceneCamera = ({ targetPosition }) => {
+  console.log(targetPosition);
+
+  const { camera, size } = useThree();
+  const target = useRef(new THREE.Vector3(...targetPosition));
+
+  useEffect(() => {
+    camera.fov = 80; // Field of View
+    camera.aspect = size.width / size.height; // Aspect Ratio
+    camera.near = 0.1; // Near Clipping Plane
+    camera.far = 10000; // Far Clipping Plane
+    camera.updateProjectionMatrix();
+  }, [camera, size]);
+
+  useEffect(() => {
+    target.current.set(...targetPosition);
+  }, [targetPosition]);
+
+  useFrame(() => {
+    camera.position.lerp(target.current, 0.05); // Smooth transition
+    camera.lookAt(0, 0, 0);
+  });
+
+  return null;
+};
+
 // Main Scene
 const App = () => {
-  const [fogEnabled, setFogEnabled] = useState(false);
-
   const {
     setPause,
     direction,
     setDirection,
     textIndex,
-    setTextIndex
+    setTextIndex,
+    setCarLights
   } = useContext(CarContext);
+
+  const {
+    fogEnabled,
+    setFogEnabled,
+    starsEnabled,
+    setStarsEnabled,
+    sunEnabled,
+    setSunEnabled,
+    ambientLightEnabled,
+    setAmbientLightEnabled,
+    cameraPosition,
+    setCameraPosition,
+    showControls,
+    setShowControls
+  } = useContext(WorldContext);
 
   const moveLeft = () => {
     // console.log(`In moveleft direction.current = ${direction.current}`);
@@ -972,8 +1074,15 @@ const App = () => {
         background: `${skyPresets[textIndex].colors[0]}` // 'linear-gradient(#DAD4F7, #FFFFFF)'
       }}
         shadows onCreated={({ gl }) => { gl.shadowMap.enabled = true; gl.shadowMap.type = THREE.PCFSoftShadowMap; }}
-        camera={{ position: camerCood1, fov: 80, near: 1, far: 10000, aspect: window.innerWidth / window.innerHeight }}
+      /* camera={{
+        position: cameraPosition,
+        fov: 80,
+        near: 1,
+        far: 10000,
+        aspect: window.innerWidth / window.innerHeight
+      }} */
       >
+        <SceneCamera targetPosition={cameraPosition} />
         <Lights index={textIndex} />
         {/* <Background index={textIndex} /> */}
         {/* <PerspectiveCamera
@@ -981,22 +1090,23 @@ const App = () => {
           position={[0, 900, 900]}
           args={[80, window.innerWidth / window.innerHeight, 0.1, 10000]}
         /> */}
-        {fogEnabled == true ? <fog attach="fog" args={['#efefef', HEIGHT * 0.7, 3000]} /> : <></>}
+        {fogEnabled == true ? <fog attach="fog" args={[`${skyPresets[textIndex].colors[1]}`, 1000, 3000]} /> : <></>}
 
-        <ambientLight intensity={0.4} />
-        <directionalLight
+        {ambientLightEnabled == true ? <ambientLight intensity={0.7} /> : <></>}
+        {/* <directionalLight
           position={[50, 50, 50]}
-          intensity={1} />
+          intensity={1} /> */}
         {/* shadow-mapSize={[512, 512]}
         >
         <orthographicCamera attach="shadow-camera" args={[-1000, 1000, 1000, -1000]} />
       </directionalLight> */}
 
-        <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} />
+        {sunEnabled == true ? <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} /> : <></>}
         <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
         <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
+        {starsEnabled == true ? <Stars positionY={HEIGHT * 1.5} positionZ={-5 * HEIGHT} skyRadius={3 * RADIUS} starRadius={20} noOfStars={8000} /> : <></>}
 
-        <CityScape zAxis={HEIGHT * 0.9} />
+        <CityScape zAxis={HEIGHT * 0.75} />
         <Environment zAxis={HEIGHT * 0.5} />
         <Environment zAxis={HEIGHT * 0.2} />
         <Ground positionY={-RADIUS_Y} positionZ={- HEIGHT * 0.5 + HEIGHT * 0.1} radius={RADIUS} height={HEIGHT} />
@@ -1014,13 +1124,37 @@ const App = () => {
         <Perf /> */}
 
       </Canvas >
-      <div style={{ position: "absolute", bottom: "20px", width: "100%", textAlign: "center" }}>
-        <button onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
-        <button onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-        <button onClick={() => setPause(prevPause => !prevPause)}> Pause ⏸️</button>
-        <button onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
-        <button>{skyPresets[textIndex].name}</button>
-      </div>
+      {/* Controls Bar */}
+      {showControls && (
+        <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
+          <button className="btn-control" onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
+          <button className="btn-control" onClick={() => setTextIndex(0)}>Start Over ⏎</button>
+          <button className="btn-control" onClick={() => setPause(prevState => !prevState)}> Pause ⏸️</button>
+          <button className="btn-control" onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
+          <button className="btn-control" onClick={() => setCarLights(prevState => !prevState)}> Car Lights 💡</button>
+
+
+          <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
+          <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
+          <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞</button>
+          <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
+
+          <button className="btn-control" onClick={() => setCameraPosition(camerCood1)}> Camera 1 </button>
+          <button className="btn-control" onClick={() => setCameraPosition(camerCood2)}> Camera 2 </button>
+          <button className="btn-control" onClick={() => setCameraPosition(camerCood3)}> Camera 3 </button>
+
+          <label className="text-white mt-2 ml-2 text-base font-semibold">{skyPresets[textIndex].name}</label>
+
+          <button
+            onClick={() => setShowControls((prev) => !prev)}
+            className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+          >
+            {showControls ? "Hide Controls" : "Show Controls"}
+          </button>
+        </div>
+      )}
+      {/* Show/Hide Controls Button */}
+      <ScreenMessage />
       <SocialBar />
     </>
   );

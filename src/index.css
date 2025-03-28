@@ -61,6 +61,34 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.btn-control {
+  @apply px-5 py-2 rounded-lg font-semibold shadow-md transition-all;
+}
+
+.btn-control:hover {
+  @apply scale-105 brightness-110;
+}
+
+.btn-control:active {
+  @apply scale-95;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
