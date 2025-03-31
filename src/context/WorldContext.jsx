@@ -11,6 +11,7 @@ const WorldContextProvider = ({ children }) => {
      const [cameraPosition, setCameraPosition] = useState([0, 110, 550]);
      const [showMessage, setShowMessage] = useState(false);
      const [showControls, setShowControls] = useState(true);
+     const [shootingStarsEnabled, setShootingStarsEnabled] = useState(false);
 
      return (
           <WorldContext.Provider value={{
@@ -27,7 +28,9 @@ const WorldContextProvider = ({ children }) => {
                showMessage,
                setShowMessage,
                showControls,
-               setShowControls
+               setShowControls,
+               shootingStarsEnabled,
+               setShootingStarsEnabled
           }}>
                {children}
           </ WorldContext.Provider>

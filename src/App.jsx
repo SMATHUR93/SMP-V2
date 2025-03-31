@@ -28,7 +28,7 @@ const HEIGHT = 3500; // Cylinder radius
 
 const RADIUS_Y = RADIUS + 50;
 
-const camerCood1 = [0, 110, 550];
+const camerCood1 = [0, 110, 750];
 const camerCood1WidthUnder1000 = [0, 110, 600];
 const camerCood2 = [0, 150, 450];
 const camerCood3 = [300, 150, 300];
@@ -179,7 +179,7 @@ function Car({ direction }) {
   });
 
   return (
-    <group position={[0, -9, 15]} ref={carRef} castShadow  >
+    <group position={[0, -8, 15]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
       <Cylinder args={[4, 4, 70]} position={[-60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
@@ -643,12 +643,15 @@ function Environment({ zAxis }) {
   );
 }
 
-const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, positionY = 0.5 * window.innerWidth }) => {
+const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, positionY = 0.5 * window.innerWidth, index = 0 }) => {
+
+  const lightConfig = skyPresets[index].light;
+
   return (
     <Sphere args={[200, 32, 32]} position={[positionX, positionY, 1500]}>
       <meshStandardMaterial emissive={sunColor} emissiveIntensity={5} color={sunColor} />
       <pointLight
-        args={[sunColor, 11, 0, 0.1]}
+        args={[lightConfig.color, lightConfig.intensity * 15, 0, 0.1]}
         position={[positionX, positionY, 0]}
         castShadow
         shadow-mapSize={[1024, 1024]}
@@ -685,47 +688,57 @@ const Stars = ({ positionY = HEIGHT * 0.5, positionZ = -2 * HEIGHT, skyRadius = 
   );
 };
 
-// 🎇 Shooting Star Component
-const ShootingStar = () => {
-  const starRef = useRef();
-  const [position, setPosition] = useState([0, 0, 0]);
+const ShootingStar = ({ position, starRadius }) => {
+  const ref = useRef();
+  const speed = 15 + Math.random() * 5;
   const [opacity, setOpacity] = useState(1);
-  const [active, setActive] = useState(false);
 
-  useEffect(() => {
-    // Randomly position shooting star in the sky
-    setPosition([
-      Math.random() * 600 - 300, // X-axis (random left/right)
-      Math.random() * 300 + 100, // Y-axis (high in sky)
-      Math.random() * -300, // Z-axis (random depth)
-    ]);
+  let x = position[0];
+  let y = position[1];
+  let z = position[2];
 
-    setActive(true);
-  }, []);
-
-  useFrame(({ clock }) => {
-    if (!active) return;
-
-    if (starRef.current) {
-      // Move star diagonally
-      starRef.current.position.x += 15;
-      starRef.current.position.y -= 10;
-      setOpacity((prev) => Math.max(prev - 0.1, 0)); // Fade out
-
-      // Remove star after 1 frame
-      if (opacity <= 0.1) {
-        setActive(false);
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.position.x -= speed * 0.2;
+      ref.current.position.y -= speed * 0.01;
+      setOpacity((prev) => Math.max(0, prev - Math.random() * 0.01));
+      if (opacity <= 0) {
+        ref.current.position.set(x, y, z);
+        setOpacity(1);
       }
     }
   });
 
   return (
-    active && (
-      <mesh ref={starRef} position={position}>
-        <planeGeometry args={[10, 2]} />
-        <meshBasicMaterial color="white" transparent opacity={opacity} />
+    <mesh ref={ref} position={position}>
+
+      <mesh>
+        <sphereGeometry args={[starRadius, 8, 8]} />
+        <meshStandardMaterial color="yellow" emissive="yellow" transparent opacity={opacity} />
       </mesh>
-    )
+      <mesh position={[starRadius * 7.5, 0, 0]} rotation={[0, 0, Math.PI * 1.5]} >
+        <coneGeometry args={[starRadius, starRadius * 15]} />
+        <meshStandardMaterial color="yellow" emissive="yellow" transparent opacity={opacity} />
+      </mesh>
+    </mesh >
+  );
+};
+
+const ShootingStarField = ({ positionX = HEIGHT, positionY = HEIGHT * 0.5, positionZ = HEIGHT * 0.75, starRadius = 20, noOfStars = 10 }) => {
+  return (
+    <>
+      {Array.from({ length: noOfStars }).map((_, i) => (
+        <ShootingStar
+          key={i}
+          starRadius={starRadius}
+          position={[
+            Math.random() > 0.5 ? Math.random() * window.innerWidth * 3.5 : - Math.random() * window.innerWidth * 3.5,
+            window.innerHeight / 5 + Math.random() * window.innerHeight * 2,
+            positionZ,
+          ]}
+        />
+      ))}
+    </>
   );
 };
 
@@ -749,19 +762,19 @@ const Background = ({ index = 0 }) => {
 // 🎨 Sky gradient presets & lighting configurations
 const skyPresets = [
 
-  { name: "Dawn 0500-0700", colors: ["linear-gradient(to bottom, #FFB75E, #FFA647, #FF7F50, #FF4500)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
-  { name: "Early Morning 0700-0900", colors: ["#linear-gradient(to bottom, #FFEC82, #FFD700, #FFAA00, #FF8C00)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
-  { name: "Morning Sky 0900-1100", colors: ["linear-gradient(to bottom, #C1E1DC, #84C0C6, #5BADC1, #3182C8)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
-  { name: "Late Morning 1100-1300", colors: ["linear-gradient(to bottom, #87CEEB, #63B8FF, #4682B4, #1E90FF)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
-  { name: "Noon 1300-1500", colors: ["linear-gradient(to bottom, #A2C3F1, #6099D8, #2D6CC0, #124BAD)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
-  { name: "Afternoon Heat 1500-1700", colors: ["linear-gradient(to bottom, #FFA500, #FF8C00, #FF4500, #B22222)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
-  { name: "Sunset 1700-1900", colors: ["linear-gradient(to bottom, #FFD700, #FFAA00, #FF8C00, #FF4500)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
-  { name: "Dusk 1900-2100", colors: ["linear-gradient(to bottom, #FFA07A, #DC143C, #8B0000, #660000)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
-  { name: "Early Night 2100-2300", colors: ["linear-gradient(to bottom, #003366, #002B55, #001F40, #00122A)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
-  { name: "Midnight 2300-0100", colors: ["linear-gradient(to bottom, #191970, #000080, #00008B, #000033)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
-  { name: "Deep Night 0100-0300", colors: ["linear-gradient(to bottom, #11002F, #330066, #660099, #9900CC)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
-  { name: "Pre-Dawn Darkness 0300-0500 ", colors: ["linear-gradient(to bottom, #080808, #0C0C0C, #101010, #141414)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
-  { name: "Last", colors: ["linear-gradient(to bottom, #EFEFEF, #AAAAAA, #555555, #000000)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+  { name: "Dawn 0400-0600", colors: ["linear-gradient(to bottom, #FFB75E, #FFA647, #FF7F50, #FF4500)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+  { name: "Early Morning 0600-0800", colors: ["#linear-gradient(to bottom, #FFEC82, #FFD700, #FFAA00, #FF8C00)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Morning Sky 0800-1000", colors: ["linear-gradient(to bottom, #C1E1DC, #84C0C6, #5BADC1, #3182C8)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Late Morning 1000-1200", colors: ["linear-gradient(to bottom, #87CEEB, #63B8FF, #4682B4, #1E90FF)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Noon 1200-1400", colors: ["linear-gradient(to bottom, #A2C3F1, #6099D8, #2D6CC0, #124BAD)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
+  { name: "Afternoon Heat 1400-1600", colors: ["linear-gradient(to bottom, #FFA500, #FF8C00, #FF4500, #B22222)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Sunset 1600-1800", colors: ["linear-gradient(to bottom, #FFD700, #FFAA00, #FF8C00, #FF4500)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Dusk 1800-2000", colors: ["linear-gradient(to bottom, #FFA07A, #DC143C, #8B0000, #660000)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Early Night 2000-2200", colors: ["linear-gradient(to bottom, #003366, #002B55, #001F40, #00122A)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
+  { name: "Midnight 2200-0000", colors: ["linear-gradient(to bottom, #191970, #000080, #00008B, #000033)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Deep Night 0000-0200", colors: ["linear-gradient(to bottom, #11002F, #330066, #660099, #9900CC)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Pre-Dawn Darkness 0200-0400 ", colors: ["linear-gradient(to bottom, #080808, #0C0C0C, #101010, #141414)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
+  { name: "Last", colors: ["linear-gradient(to bottom, #000000, #000000, #000000, #000000)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
 ];
 
 /* const skyPresets = [
@@ -826,14 +839,6 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
     setIdx(textIndex);
   }, [textIndex]);
 
-  /* return (
-    <mesh position={textPosition} rotation={textRotation}>
-      <Text fontSize={50} color={colors.black}>
-        {texts[idx]}
-      </Text>
-      <meshStandardMaterial color={colors.black} />
-    </mesh>
-  ); */
   return (
     <Html position={textPosition} center>
       <div style={{ padding: "10px", borderRadius: "5px", width: '250px', height: '300px' }}>
@@ -852,12 +857,11 @@ function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotat
   }, [textIndex]);
 
   return (
-    <mesh position={textPosition} rotation={textRotation}>
-      <Text fontSize={50} color={colors.black}>
-        {texts[idx]}
-      </Text>
-      <meshStandardMaterial color={colors.black} />
-    </mesh>
+    <Html position={textPosition} rotation={textRotation} center>
+      <div style={{ padding: "10px", borderRadius: "5px", width: '250px', height: '300px' }}>
+        <p style={{ textWrap: 'pretty', fontSize: 20, textAlign: 'center' }} className="bg-blue-500 text-white p-4">{texts[idx]}</p>
+      </div>
+    </Html>
   );
 }
 
@@ -955,7 +959,7 @@ const ScreenMessage = () => {
   }
 
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm shadow-md animate-fadeIn">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-lg text-sm shadow-md animate-fadeIn">
       🔍 Best viewed on a larger screen!
     </div>
   );
@@ -1009,12 +1013,12 @@ const App = () => {
     cameraPosition,
     setCameraPosition,
     showControls,
-    setShowControls
+    setShowControls,
+    shootingStarsEnabled,
+    setShootingStarsEnabled
   } = useContext(WorldContext);
 
   const moveLeft = () => {
-    // console.log(`In moveleft direction.current = ${direction.current}`);
-    // direction.current = -1;
     setDirection(-1);
     let prev = textIndex;
     let newVal = textIndex;
@@ -1024,7 +1028,6 @@ const App = () => {
       newVal--;
     }
     setTextIndex(newVal);
-    // console.log(`moveDirection = ${direction} , prev = ${prev} and newVal =  ${newVal}`);
   };
 
   const decelerateFromLeft = () => {
@@ -1074,28 +1077,20 @@ const App = () => {
       }} */
       >
         <SceneCamera targetPosition={cameraPosition} />
-        <Lights index={textIndex} />
         {/* <Background index={textIndex} /> */}
-        {/* <PerspectiveCamera
-          rotation={[0, 0, 0]}
-          position={[0, 900, 900]}
-          args={[80, window.innerWidth / window.innerHeight, 0.1, 10000]}
-        /> */}
         {fogEnabled == true ? <fog attach="fog" args={[`${skyPresets[textIndex].colors[1]}`, 1000, 3000]} /> : <></>}
 
         {ambientLightEnabled == true ? <ambientLight intensity={0.7} /> : <></>}
-        {/* <directionalLight
-          position={[50, 50, 50]}
-          intensity={1} /> */}
-        {/* shadow-mapSize={[512, 512]}
-        >
-        <orthographicCamera attach="shadow-camera" args={[-1000, 1000, 1000, -1000]} />
-      </directionalLight> */}
+        <Lights index={textIndex} />
+        {sunEnabled == true ? <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} index={textIndex} /> : <></>}
 
-        {sunEnabled == true ? <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} /> : <></>}
         <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
         <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
-        {starsEnabled == true ? <Stars positionY={HEIGHT * 1.5} positionZ={-5 * HEIGHT} skyRadius={3 * RADIUS} starRadius={20} noOfStars={8000} /> : <></>}
+        {starsEnabled == true || textIndex > 7 ? <Stars positionY={HEIGHT * 1.5} positionZ={-5 * HEIGHT} skyRadius={3 * RADIUS} starRadius={20} noOfStars={10000} /> : <></>}
+        {shootingStarsEnabled == true || textIndex == 12 ?
+          <ShootingStarField positionX={HEIGHT} positionY={HEIGHT * 2} positionZ={- HEIGHT * 0.75} starRadius={10} noOfStars={100} /> :
+          <></>
+        }
 
         <CityScape zAxis={HEIGHT * 0.75} />
         <Environment zAxis={HEIGHT * 0.5} />
@@ -1105,57 +1100,30 @@ const App = () => {
         <Environment zAxis={-HEIGHT * 0.07} />
         <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.2} radius={RADIUS * 0.998} height={HEIGHT / 5} />
 
-        <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} />
+        {cameraPosition != camerCood3 ? <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} /> : <></>}
         {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} /> */}
 
-        {/* <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} />
-        <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
+        {cameraPosition == camerCood3 ? <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} /> : <></>}
+        {/* <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
         {/* <OrbitControls enableZoom enablePen enableRotate />
         <Perf /> */}
 
       </Canvas >
       {/* Controls Bar */}
-      {showControls && (
-        <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
-          <button className="btn-control" onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
-          <button className="btn-control" onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-          <button className="btn-control" onClick={() => setPause(prevState => !prevState)}> Pause ⏸️</button>
-          <button className="btn-control" onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
-          <button className="btn-control" onClick={() => setCarLights(prevState => !prevState)}> Car Lights 💡</button>
-
-
-          <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
-          <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
-          <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞</button>
-          <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
-
-          <button className="btn-control" onClick={() => setCameraPosition(camerCood1)}> Camera 1 </button>
-          <button className="btn-control" onClick={() => setCameraPosition(camerCood2)}> Camera 2 </button>
-          <button className="btn-control" onClick={() => setCameraPosition(camerCood3)}> Camera 3 </button>
-
-          <label className="text-white mt-2 ml-2 text-base font-semibold">{skyPresets[textIndex].name}</label>
-
-          <button
-            onClick={() => setShowControls((prev) => !prev)}
-            className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
-          >
-            {showControls ? "Hide Controls" : "Show Controls"}
-          </button>
-        </div>
-      )}
       <div style={{ position: "absolute", width: "100%", textAlign: "center" }} className="fixed bottom-12 left-1/2 -translate-x-1/2 flex flex-wrap gap-4 bg-gray-800 bg-opacity-80 p-4 rounded-xl shadow-lg">
         {showControls && (
           <>
-            <button className="btn-control" onClick={moveLeft} onBlur={decelerateFromLeft}>Back</button>
-            <button className="btn-control" onClick={() => setTextIndex(0)}>Start Over ⏎</button>
-            <button className="btn-control" onClick={() => setPause(prevState => !prevState)}> Pause ⏸️</button>
-            <button className="btn-control" onClick={moveRight} onBlur={decelerateFromRight}>Forward</button>
+            <button className="btn-control" onClick={moveLeft} onBlur={() => setDirection(0)}> Left ⬅️ </button>
+            <button className="btn-control" onClick={() => setTextIndex(0)}>Restart ⏎</button>
+            <button className="btn-control" onClick={() => setPause(prevState => !prevState)}> Play/Pause ⏯️ </button>
+            <button className="btn-control" onClick={moveRight} onBlur={() => setDirection(0)}> Right ➡️ </button>
             <button className="btn-control" onClick={() => setCarLights(prevState => !prevState)}> Car Lights 💡</button>
 
 
             <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
             <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
+            <button className="btn-control" onClick={() => setShootingStarsEnabled(prevState => !prevState)}> Shooting Stars 🌠</button>
             <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞</button>
             <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
 
@@ -1168,7 +1136,7 @@ const App = () => {
         )}
         <button
           onClick={() => setShowControls((prev) => !prev)}
-          className=" bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+          className="btn-control bg-blue-500 text-white px-1 py-1 rounded-md shadow-md hover:bg-blue-700 transition"
         >
           {showControls ? "Hide Controls" : "Show Controls"}
         </button>
