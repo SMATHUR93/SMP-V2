@@ -19,10 +19,10 @@ const MAX_RANGE = window.innerWidth / 7; // Movement limit
 const SPEED = 1.9; // Movement speed
 const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.25;
-const GROUND_SPEED = 0.03;
-const SEA_SPEED = 0.007;
-const CITY_SCAPE_SPEED = 0.003;
-const CLOUD_SPEED = 0.005;
+const GROUND_SPEED = 0.002;
+const SEA_SPEED = 0.006;
+const CITY_SCAPE_SPEED = 0.002;
+const CLOUD_SPEED = 0.003;
 const RADIUS = 5000; // Cylinder radius
 const HEIGHT = 3500; // Cylinder radius
 
