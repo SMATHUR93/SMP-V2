@@ -7,8 +7,8 @@ const WorldContextProvider = ({ children }) => {
      const [fogEnabled, setFogEnabled] = useState(false);
      const [starsEnabled, setStarsEnabled] = useState(false);
      const [sunEnabled, setSunEnabled] = useState(true);
-     const [ambientLightEnabled, setAmbientLightEnabled] = useState(true);
-     const [cameraPosition, setCameraPosition] = useState([0, 110, 550]);
+     const [ambientLightEnabled, setAmbientLightEnabled] = useState(false);
+     const [cameraPosition, setCameraPosition] = useState([0, 11, 75]);
      const [showMessage, setShowMessage] = useState(false);
      const [showControls, setShowControls] = useState(true);
      const [shootingStarsEnabled, setShootingStarsEnabled] = useState(false);

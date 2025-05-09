@@ -15,23 +15,23 @@ import { Perf } from 'r3f-perf'
 
 import * as THREE from 'three';
 
-const MAX_RANGE = window.innerWidth / 7; // Movement limit
-const SPEED = 1.9; // Movement speed
+const MAX_RANGE = window.innerWidth * 0.018; // Movement limit
+const SPEED = 0.35; // Movement speed
 const DAMPING = 0.005; // Damping factor
-const WHEEL_ROTATION_SPEED = 0.25;
+const WHEEL_ROTATION_SPEED = 0.3;
 const GROUND_SPEED = 0.002;
 const SEA_SPEED = 0.006;
 const CITY_SCAPE_SPEED = 0.002;
 const CLOUD_SPEED = 0.003;
-const RADIUS = 5000; // Cylinder radius
-const HEIGHT = 3500; // Cylinder radius
+const RADIUS = 500; // Cylinder radius
+const HEIGHT = 350; // Cylinder radius
 
-const RADIUS_Y = RADIUS + 50;
+const RADIUS_Y = RADIUS + 5;
 
-const camerCood1 = [0, 110, 750];
-const camerCood1WidthUnder1000 = [0, 110, 600];
-const camerCood2 = [0, 150, 450];
-const camerCood3 = [300, 150, 300];
+const camerCood1 = [0, 11, 75];
+const camerCood1WidthUnder1000 = [0, 11, 60];
+const camerCood2 = [0, 15, 45];
+const camerCood3 = [45, 25, 45];
 
 const colors = {
   cream: '#F7EBD4',
@@ -64,7 +64,7 @@ const DriverHead = ({ position }) => {
   let y = position[1];
   let z = position[2];
 
-  let faceSize = 15;
+  let faceSize = 1.5;
 
   return (
     <group position={[x, y, z]}>
@@ -74,13 +74,13 @@ const DriverHead = ({ position }) => {
       </Box>
 
       {/* 💇 Hair */}
-      <group position={[-faceSize / 5, 1, 0]}>
+      <group position={[-faceSize * 0.2, 0.1, 0]}>
         <group ref={hairsTopRef}>
           {Array.from({ length: 12 }).map((_, i) => {
             const col = i % 3;
             const row = Math.floor(i / 3);
             return (
-              <Box key={i} args={[faceSize / 2.1, faceSize / 1.8, faceSize]} position={[-4 + row * 4, 5, -4 + col * 4]}>
+              <Box key={i} args={[faceSize / 2.1, faceSize / 1.8, faceSize]} position={[-0.5 + row * 0.4, 0.5, -0.4 + col * 0.4]}>
                 <meshLambertMaterial color={colors.black} />
               </Box>
             );
@@ -88,25 +88,25 @@ const DriverHead = ({ position }) => {
         </group>
 
         {/* 🏷️ Side Hair */}
-        <Box args={[12, faceSize / 2, 3]} position={[0.8, -0.2, -faceSize / 2]}>
+        <Box args={[1.2, faceSize / 2, 0.3]} position={[0.08, -0.2, -faceSize / 2]}>
           <meshLambertMaterial color={colors.black} />
         </Box>
-        <Box args={[12, faceSize / 2, 3]} position={[0.8, -0.2, faceSize / 2]}>
+        <Box args={[1.2, faceSize / 2, 0.3]} position={[0.08, -0.2, faceSize / 2]}>
           <meshLambertMaterial color={colors.black} />
         </Box>
 
         {/* 🎒 Back Hair */}
-        <Box args={[2, 8, faceSize + 1]} position={[-faceSize / 3, -0.4, 0]}>
+        <Box args={[0.2, 1.2, faceSize + 0.1]} position={[-faceSize / 3, -0.4, 0]}>
           <meshLambertMaterial color={colors.black} />
         </Box>
 
       </group>
 
       {/* Ears */}
-      <Box args={[2, 3, 4]} position={[0, 0, -faceSize / 2]}>
+      <Box args={[0.2, 0.3, 0.4]} position={[0, 0, -faceSize / 2]}>
         <meshLambertMaterial color={colors.cream} />
       </Box>
-      <Box args={[2, 3, 4]} position={[0, 0, faceSize / 2]}>
+      <Box args={[0.2, 0.3, 0.4]} position={[0, 0, faceSize / 2]}>
         <meshLambertMaterial color={colors.cream} />
       </Box>
     </group>
@@ -130,7 +130,7 @@ export function Wheel({ position, rotationSpeed }) {
     <group ref={wheelRef} position={position}>
       {/* Outer Tyre using Torus */}
       <mesh>
-        <torusGeometry args={[20, 5]} />
+        <torusGeometry args={[2, 0.5]} />
         {/* <meshStandardMaterial map={tyreTexture} /> */}
         <meshStandardMaterial color={colors.black} />
       </mesh>
@@ -138,7 +138,7 @@ export function Wheel({ position, rotationSpeed }) {
       {/* Spokes */}
       {[...Array(12)].map((_, i) => (
         <mesh key={i} rotation={[0, 0, (i * Math.PI) / 3]}>
-          <boxGeometry args={[3, 35, 3]} />
+          <boxGeometry args={[0.3, 3.5, 0.3]} />
           <meshStandardMaterial color={colors.black} />
         </mesh>
       ))}
@@ -150,7 +150,8 @@ export function Wheel({ position, rotationSpeed }) {
 function Car({ direction }) {
   const {
     pause,
-    carLights
+    carLights,
+    textIndex
   } = useContext(CarContext);
   const carRef = useRef();
   const wheelRefs = useRef([]);
@@ -179,24 +180,24 @@ function Car({ direction }) {
   });
 
   return (
-    <group position={[0, -8, 15]} ref={carRef} castShadow  >
+    <group position={[0, -0.8, 1.5]} ref={carRef} castShadow  >
 
       {/* 🚙 Jeep Rear */}
-      <Cylinder args={[4, 4, 70]} position={[-60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[0.4, 0.4, 7]} position={[-6, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
-      <RoundedBox args={[60, 30, 70]} radius={3} position={[-30, -15, 0]} castShadow >
+      <RoundedBox args={[6, 3, 7]} radius={0.3} position={[-3, -1.5, 0]} castShadow >
         <meshStandardMaterial color='#B8143A' />
       </RoundedBox>
 
       {/* 🚗 Jeep Front */}
-      <RoundedBox args={[60, 40, 70]} radius={5} position={[30, -10, 0]} castShadow >
+      <RoundedBox args={[6, 4, 7]} radius={0.5} position={[3, -1, 0]} castShadow >
         <meshStandardMaterial color='#B82214' />
 
-        <Sphere args={[3]} position={[30, 10, 20]}>
+        <Sphere args={[0.3]} position={[3, 1, 2]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
-          {carLights == true ? <pointLight
-            args={['#ffff00', 10, 1000, 0.2]}
+          {carLights == true || textIndex > 7 ? <pointLight
+            args={['#ffff00', 1, 100, 0.2]}
             position={[0, 0, 0]}
             castShadow
             shadow-mapSize={[1024, 1024]}
@@ -206,10 +207,10 @@ function Car({ direction }) {
           /> : <></>}
         </Sphere>
 
-        <Sphere args={[3]} position={[30, 10, -20]}>
+        <Sphere args={[0.3]} position={[3, 1, -2]}>
           <meshStandardMaterial emissive={'#ffff00'} emissiveIntensity={5} color={'#ffff00'} />
-          {carLights == true ? <pointLight
-            args={['#ffff00', 10, 1000, 0.2]}
+          {carLights == true || textIndex > 7 ? <pointLight
+            args={['#ffff00', 1, 100, 0.2]}
             position={[0, 0, 0]}
             castShadow
             shadow-mapSize={[1024, 1024]}
@@ -219,50 +220,50 @@ function Car({ direction }) {
           /> : <></>}
         </Sphere>
       </RoundedBox>
-      <Cylinder args={[4, 4, 70]} position={[60, -28, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[0.4, 0.4, 7]} position={[6, -2.8, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
 
       {/* <JeepFront args={[60, 40, 70]} position={[30, -10, 0]} /> */}
 
       {/* 🚗 Wind Shield */}
-      <Box args={[1, 20, 70]} position={[5, 20, 0]}  >
+      <Box args={[0.1, 2, 7]} position={[0.5, 2, 0]}  >
         <meshStandardMaterial color={colors.white} />
       </Box>
 
       {/* 🚙 Roll Cage / Windshield Frame */}
-      <Cylinder args={[5, 5, 60]} position={[-30, 15, 30]} rotation={[0, 0, Math.PI / 2]}  >
+      <Cylinder args={[0.5, 0.5, 6]} position={[-3, 1.5, 3]} rotation={[0, 0, Math.PI / 2]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
-      <Cylinder args={[5, 5, 60]} position={[-30, 15, -30]} rotation={[0, 0, Math.PI / 2]}  >
+      <Cylinder args={[0.5, 0.5, 6]} position={[-3, 1.5, -3]} rotation={[0, 0, Math.PI / 2]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
-      <Cylinder args={[5, 5, 60]} position={[-60, 15, 0]} rotation={[Math.PI / 2, 0, 0]}  >
+      <Cylinder args={[0.5, 0.5, 6]} position={[-6, 1.5, 0]} rotation={[Math.PI / 2, 0, 0]}  >
         <meshStandardMaterial color={colors.black} />
       </Cylinder>
 
-      <group position={[-30, 50, 0]}  >
-        <DriverHead position={[0, -9, 0]} puase={pause} />
+      <group position={[-3, 5, 0]}  >
+        <DriverHead position={[0, -0.9, 0]} puase={pause} />
 
-        <Box args={[10, 40, 40]} position={[-20, -35, 0]} >
+        <Box args={[1, 4, 4]} position={[-2, -3.5, 0]} >
           <meshStandardMaterial color={colors.black} />
         </Box>
-        <Cylinder args={[10, 10, 37]} position={[0, -35, 0]} >
+        <Cylinder args={[1, 1, 3.7]} position={[0, -3.5, 0]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 25]} position={[0, -30, 14]} rotation={[0, 0, Math.PI]} >
+        <Cylinder args={[0.5, 0.5, 2.5]} position={[0, -3, 1.4]} rotation={[0, 0, Math.PI]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 25]} position={[0, -30, -14]} rotation={[0, 0, Math.PI]} >
+        <Cylinder args={[0.5, 0.5, 2.5]} position={[0, -3, -1.4]} rotation={[0, 0, Math.PI]} >
           <meshStandardMaterial color={colors.blue} />
         </Cylinder>
-        <Cylinder args={[5, 5, 20]} position={[10, -35, 15]} rotation={[0, 0, Math.PI / 2]} >
+        <Cylinder args={[0.5, 0.5, 2]} position={[1, -3.5, 1.5]} rotation={[0, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.cream} />
         </Cylinder>
-        <Cylinder args={[5, 5, 20]} position={[10, -35, -15]} rotation={[0, 0, Math.PI / 2]} >
+        <Cylinder args={[0.5, 0.5, 2]} position={[1, -3.5, -1.5]} rotation={[0, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.cream} />
         </Cylinder>
-        <Cylinder args={[16, 16, 9]} position={[25, -35, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} >
+        <Cylinder args={[1.6, 1.6, 0.9]} position={[2.5, -3.5, 0]} rotation={[Math.PI / 2, 0, Math.PI / 2]} >
           <meshStandardMaterial color={colors.black} />
         </Cylinder>
       </group>
@@ -270,18 +271,18 @@ function Car({ direction }) {
       {/* <Driver /> */}
 
       {/* 🔩 Axle Shafts */}
-      {[-50, 50].map((x) => (
-        <Cylinder key={`shaft-${x}`} args={[5, 5, 100]} position={[x, -20, 0]} rotation={[Math.PI / 2, 0, 0]} >
+      {[-5, 5].map((x) => (
+        <Cylinder key={`shaft-${x}`} args={[0.5, 0.5, 10]} position={[x, -2, 0]} rotation={[Math.PI / 2, 0, 0]} >
           <meshStandardMaterial color={colors.black} />
         </Cylinder>
       ))}
 
-      {[-50, 50].map((x, i) =>
-        [-50, 50].map((z, j) => (
+      {[-5, 5].map((x, i) =>
+        [-5, 5].map((z, j) => (
           <Wheel
             ref={(el) => (wheelRefs.current[i * 2 + j] = el)}
             key={`${i}-${j}`}
-            position={[x, -20, z]}
+            position={[x, -2, z]}
             rotationSpeed={WHEEL_ROTATION_SPEED}
           />
         ))
@@ -290,13 +291,13 @@ function Car({ direction }) {
   );
 }
 
-const Cloud = ({ position = [0, 0, 0], scale = [0, 0, 0], cloudSize = 20 }) => {
+const Cloud = ({ position = [0, 0, 0], scale = [0, 0, 0], cloudSize = 2 }) => {
 
   const cloudRef = useRef();
 
   const numBlocs = 3 + Math.floor(Math.random() * 3); // Between 3 to 5 cubes
   const boxes = new Array(numBlocs).fill().map((_, i) => ({
-    position: [i * 7.5, Math.random() * 10, Math.random() * 10],
+    position: [i * 0.75, Math.random() * 5, Math.random() * 5],
     rotation: [0, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2],
     scale: [0.1 + Math.random() * 0.9, 0.1 + Math.random() * 0.9, 0.1 + Math.random() * 0.9],
   }));
@@ -343,13 +344,13 @@ const Sky = ({ yAxis, zAxis, cloudSize }) => {
       }
     }
   });
-  const numClouds = 25;
+  const numClouds = 12;
   return (
     <group ref={skyRef} position={[0, yAxis, zAxis]}>
       {Array.from({ length: numClouds }).map((_, i) => {
         const stepAngle = (Math.PI * 2) / numClouds;
         const angle = stepAngle * i;
-        const height = RADIUS_Y + 300 + Math.random() * 150;
+        const height = RADIUS_Y + 30 + Math.random() * 10;
         const s = 1 + Math.random() * 2;
         return (
           <Cloud
@@ -357,7 +358,7 @@ const Sky = ({ yAxis, zAxis, cloudSize }) => {
             position={[
               Math.cos(angle) * height,
               Math.sin(angle) * height,
-              -300 - Math.random() * 400,
+              -30 - Math.random() * 40,
             ]}
             scale={[s, s, s]}
             cloudSize={cloudSize}
@@ -410,7 +411,7 @@ const Sea = ({ positionY = -RADIUS_Y, positionZ = -HEIGHT / 4, radius = RADIUS, 
       waves.push({
         y: positions[i + 1],
         ang: Math.random() * Math.PI * 2,
-        amp: Math.random() * 15,
+        amp: Math.random() * 1.5,
         speed: 0.016 + Math.random() * 0.032,
       });
     }
@@ -454,7 +455,7 @@ const Building = ({ position, width, height, depth, color }) => {
   let y = position[1];
   let z = position[2];
 
-  const numRows = Math.floor(height / 150);
+  const numRows = Math.floor(height / 15);
   const numWindowsPerRow = 2 // Math.floor(width / 150);
   const windowSize = [width / 5, width / 5];
 
@@ -466,10 +467,10 @@ const Building = ({ position, width, height, depth, color }) => {
     // console.log(`numWindowsPerRow is ${numWindowsPerRow}`);
     // console.log(`windowSize is ${windowSize}`);
 
-    let initX = x - x - 140;
-    let initY = -2.5 * y;
-    let xInterval = 100;
-    let yInterval = 120;
+    let initX = x - x - 14;
+    let initY = -2.25 * y;
+    let xInterval = 10;
+    let yInterval = 12;
     for (let row = 1; row <= numRows; row++) {
       const yOffset = initY + yInterval * row;
       for (let col = 1; col <= numWindowsPerRow; col++) {
@@ -498,9 +499,9 @@ const Building = ({ position, width, height, depth, color }) => {
 
 const Buildings = ({ position, rotationY }) => {
 
-  const buildingWidth = 200;
-  const buildingHeight = 300;
-  const buildingDepth = 150;
+  const buildingWidth = 20;
+  const buildingHeight = 30;
+  const buildingDepth = 15;
 
   const buildings = useMemo(() => {
     const colors = ["#8b5cf6", "#f59e0b", "#84cc16", "#06b6d4", "#ec4899"];
@@ -549,7 +550,7 @@ function CityScape({ zAxis }) {
   const objectsRefs = useRef([]);
 
   return (
-    <group ref={objectsRef} position={[0, - RADIUS - 30, -zAxis]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+    <group ref={objectsRef} position={[0, - RADIUS - 3, -zAxis]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
       {
         Array.from({ length: numObjects }).map((_, key) => {
           const angle = (key / numObjects) * Math.PI * 2; // Distribute evenly
@@ -577,10 +578,10 @@ const Tree = ({ position, rotationY }) => {
   let z = position[2];
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow>
-      <Sphere position={[x - x, y - y + 100, z - z]} args={[50, 80]} castShadow receiveShadow>
+      <Sphere position={[x - x, y - y + 10, z - z]} args={[5, 8]} castShadow receiveShadow>
         <meshStandardMaterial color="#66B032" />
       </Sphere>
-      <Cylinder position={[x - x, y - y, z - z]} args={[10, 10, 250]} castShadow receiveShadow>
+      <Cylinder position={[x - x, y - y, z - z]} args={[1, 1, 25]} castShadow receiveShadow>
         <meshStandardMaterial color="#4d1a00" />
       </Cylinder >
     </group>
@@ -590,7 +591,7 @@ const Tree = ({ position, rotationY }) => {
 const Bush = ({ position, rotationY }) => {
   return (
     <group position={position} rotation={[Math.PI / 2, 0, -rotationY]} castShadow receiveShadow >
-      <Sphere args={[30, 80]} castShadow receiveShadow>
+      <Sphere args={[3, 8]} castShadow receiveShadow>
         <meshStandardMaterial color="#375F1B" />
       </Sphere>
     </group>
@@ -604,7 +605,7 @@ function Environment({ zAxis }) {
   const { pause } = useContext(CarContext);
 
   const radius = RADIUS;
-  const numObjects = Math.abs(radius / 100);
+  const numObjects = Math.abs(radius / 10);
   useFrame(() => {
     if (objectsRef.current && pause == false) {
       objectsRef.current.rotation.y += CLOUD_SPEED;
@@ -614,7 +615,7 @@ function Environment({ zAxis }) {
   const objectsRefs = useRef([]);
 
   return (
-    <group ref={objectsRef} position={[0, - RADIUS - 30, -zAxis]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
+    <group ref={objectsRef} position={[0, - RADIUS - 3, -zAxis]} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
       {
         Array.from({ length: numObjects }).map((_, key) => {
           const angle = (key / numObjects) * Math.PI * Math.random() * 10; // Distribute evenly
@@ -648,7 +649,7 @@ const Sun = ({ sunColor = '#ffff00', positionX = 3 * window.innerWidth, position
   const lightConfig = skyPresets[index].light;
 
   return (
-    <Sphere args={[200, 32, 32]} position={[positionX, positionY, 1500]}>
+    <Sphere args={[20, 3.2, 3.2]} position={[positionX, positionY, 150]}>
       <meshStandardMaterial emissive={sunColor} emissiveIntensity={5} color={sunColor} />
       <pointLight
         args={[lightConfig.color, lightConfig.intensity * 15, 0, 0.1]}
@@ -690,7 +691,7 @@ const Stars = ({ positionY = HEIGHT * 0.5, positionZ = -2 * HEIGHT, skyRadius = 
 
 const ShootingStar = ({ position, starRadius }) => {
   const ref = useRef();
-  const speed = 15 + Math.random() * 5;
+  const speed = 1.5 + Math.random() * 0.5;
   const [opacity, setOpacity] = useState(1);
 
   let x = position[0];
@@ -732,8 +733,8 @@ const ShootingStarField = ({ positionX = HEIGHT, positionY = HEIGHT * 0.5, posit
           key={i}
           starRadius={starRadius}
           position={[
-            Math.random() > 0.5 ? Math.random() * window.innerWidth * 3.5 : - Math.random() * window.innerWidth * 3.5,
-            window.innerHeight / 5 + Math.random() * window.innerHeight * 2,
+            Math.random() > 0.5 ? Math.random() * window.innerWidth * 0.35 : - Math.random() * window.innerWidth * 0.35,
+            window.innerHeight / 50 + Math.random() * window.innerHeight * 0.2,
             positionZ,
           ]}
         />
@@ -762,19 +763,19 @@ const Background = ({ index = 0 }) => {
 // 🎨 Sky gradient presets & lighting configurations
 const skyPresets = [
 
-  { name: "Dawn 0400-0600", colors: ["linear-gradient(to bottom, #FFB75E, #FFA647, #FF7F50, #FF4500)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
-  { name: "Early Morning 0600-0800", colors: ["#linear-gradient(to bottom, #FFEC82, #FFD700, #FFAA00, #FF8C00)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
-  { name: "Morning Sky 0800-1000", colors: ["linear-gradient(to bottom, #C1E1DC, #84C0C6, #5BADC1, #3182C8)", "#ff9e9e"], light: { intensity: 0.7, color: "#ffdda1" } },
+  { name: "Dawn 0400-0600", colors: ["linear-gradient(to bottom, #FFB75E, #FFA647, #FF7F50, #FF4500)", "#3b4371"], light: { intensity: 0.7, color: "#ffdd44" } },
+  { name: "Early Morning 0600-0800", colors: ["#linear-gradient(to bottom, #FFEC82, #FFD700, #FFAA00, #FF8C00)", "#ff9e9e"], light: { intensity: 0.8, color: "#ffdda1" } },
+  { name: "Morning Sky 0800-1000", colors: ["linear-gradient(to bottom, #C1E1DC, #84C0C6, #5BADC1, #3182C8)", "#ff9e9e"], light: { intensity: 0.8, color: "#ffdda1" } },
   { name: "Late Morning 1000-1200", colors: ["linear-gradient(to bottom, #87CEEB, #63B8FF, #4682B4, #1E90FF)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
   { name: "Noon 1200-1400", colors: ["linear-gradient(to bottom, #A2C3F1, #6099D8, #2D6CC0, #124BAD)", "#1E90FF"], light: { intensity: 1, color: "#ffffff" } },
-  { name: "Afternoon Heat 1400-1600", colors: ["linear-gradient(to bottom, #FFA500, #FF8C00, #FF4500, #B22222)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
+  { name: "Afternoon Heat 1400-1600", colors: ["linear-gradient(to bottom, #FFA500, #FF8C00, #FF4500, #B22222)", "#ff3f3f"], light: { intensity: 0.8, color: "#ff7f50" } },
   { name: "Sunset 1600-1800", colors: ["linear-gradient(to bottom, #FFD700, #FFAA00, #FF8C00, #FF4500)", "#ff3f3f"], light: { intensity: 0.6, color: "#ff7f50" } },
   { name: "Dusk 1800-2000", colors: ["linear-gradient(to bottom, #FFA07A, #DC143C, #8B0000, #660000)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
   { name: "Early Night 2000-2200", colors: ["linear-gradient(to bottom, #003366, #002B55, #001F40, #00122A)", "#2b5876"], light: { intensity: 0.4, color: "#654ea3" } },
   { name: "Midnight 2200-0000", colors: ["linear-gradient(to bottom, #191970, #000080, #00008B, #000033)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
   { name: "Deep Night 0000-0200", colors: ["linear-gradient(to bottom, #11002F, #330066, #660099, #9900CC)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
   { name: "Pre-Dawn Darkness 0200-0400 ", colors: ["linear-gradient(to bottom, #080808, #0C0C0C, #101010, #141414)", "#191654"], light: { intensity: 0.2, color: "#ffffff" } },
-  { name: "Last", colors: ["linear-gradient(to bottom, #000000, #000000, #000000, #000000)", "#3b4371"], light: { intensity: 0.5, color: "#ffdd44" } },
+  { name: "Last", colors: ["linear-gradient(to bottom, #000000, #000000, #000000, #000000)", "#3b4371"], light: { intensity: 0.2, color: "#ffdd44" } },
 ];
 
 /* const skyPresets = [
@@ -830,7 +831,7 @@ const pageColors = [
 
 const MAX_PAGES = 13;
 
-function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRotation = [0, 0, 0] }) {
+function BackgroundText({ textIndex = 0, textPosition = [0, 20, -30], textRotation = [0, 0, 0] }) {
 
   const [idx, setIdx] = useState(0);
 
@@ -848,7 +849,7 @@ function BackgroundText({ textIndex = 0, textPosition = [0, 200, -300], textRota
   );
 }
 
-function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotation = [0, Math.PI / 2, 0] }) {
+function ForegroundText({ textIndex = 0, textPosition = [0, 20, 30], textRotation = [0, Math.PI / 2, 0] }) {
   const [idx, setIdx] = useState(0);
 
   useEffect(() => {
@@ -866,7 +867,7 @@ function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotat
 }
 
 
-/* function BackgroundPages({ textIndex = 0, pagePosition = [0, 200, -300], pageRotation = [0, 0, 0] }) {
+/* function BackgroundPages({ textIndex = 0, pagePosition = [0, 20, -30], pageRotation = [0, 0, 0] }) {
 
   const [idx, setIdx] = useState(0);
 
@@ -886,7 +887,7 @@ function ForegroundText({ textIndex = 0, textPosition = [0, 200, 300], textRotat
   );
 }; */
 
-function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRotation = [0, Math.PI / 2, 0] }) {
+/* function ForegroundPages({ textIndex = 0, pagePosition = [-20, 30, 5], pageRotation = [0, Math.PI / 2, 0] }) {
 
   const [idx, setIdx] = useState(0);
 
@@ -904,7 +905,7 @@ function ForegroundPages({ textIndex = 0, pagePosition = [-200, 300, 50], pageRo
       </Plane>;
     })
   );
-};
+}; */
 
 const SocialBar = () => {
   const [copied, setCopied] = useState("");
@@ -1015,7 +1016,8 @@ const App = () => {
     showControls,
     setShowControls,
     shootingStarsEnabled,
-    setShootingStarsEnabled
+    setShootingStarsEnabled,
+    showMessage
   } = useContext(WorldContext);
 
   const moveLeft = () => {
@@ -1078,17 +1080,28 @@ const App = () => {
       >
         <SceneCamera targetPosition={cameraPosition} />
         {/* <Background index={textIndex} /> */}
-        {fogEnabled == true ? <fog attach="fog" args={[`${skyPresets[textIndex].colors[1]}`, 1000, 3000]} /> : <></>}
+        {fogEnabled == true ? <fog attach="fog" args={[`${skyPresets[textIndex].colors[1]}`, 100, 300]} /> : <></>}
 
-        {ambientLightEnabled == true ? <ambientLight intensity={0.7} /> : <></>}
+        {ambientLightEnabled == true || textIndex >= 7 ?
+          <ambientLight intensity={0.5} /> :
+          <></>
+        }
         <Lights index={textIndex} />
-        {sunEnabled == true ? <Sun sunColor={'#ffff00'} positionX={2 * window.innerWidth} positionY={0.5 * window.innerWidth} index={textIndex} /> : <></>}
+        {sunEnabled == true ?
+          <Sun sunColor={'#ffff00'} positionX={0.2 * window.innerWidth} positionY={0.05 * window.innerWidth} index={textIndex} /> :
+          <></>
+        }
 
-        <Sky yAxis={-RADIUS_Y} zAxis={0} cloudSize={30} />
-        <Sky yAxis={-RADIUS_Y + 300} zAxis={-500} cloudSize={60} />
-        {starsEnabled == true || textIndex > 7 ? <Stars positionY={HEIGHT * 1.5} positionZ={-5 * HEIGHT} skyRadius={3 * RADIUS} starRadius={20} noOfStars={10000} /> : <></>}
+        <Sky yAxis={-RADIUS_Y + 25} zAxis={0} cloudSize={3} />
+        <Sky yAxis={-RADIUS_Y + 150} zAxis={-350} cloudSize={10} />
+
+        {starsEnabled == true || (textIndex > 7 && textIndex != 12) ?
+          <Stars positionY={HEIGHT * 2} positionZ={-5 * HEIGHT} skyRadius={5 * RADIUS} starRadius={3} noOfStars={10000} /> :
+          <></>
+        }
+
         {shootingStarsEnabled == true || textIndex == 12 ?
-          <ShootingStarField positionX={HEIGHT} positionY={HEIGHT * 2} positionZ={- HEIGHT * 0.75} starRadius={10} noOfStars={100} /> :
+          <ShootingStarField positionX={HEIGHT} positionY={HEIGHT * 2} positionZ={- HEIGHT * 0.75} starRadius={1} noOfStars={25} /> :
           <></>
         }
 
@@ -1100,11 +1113,17 @@ const App = () => {
         <Environment zAxis={-HEIGHT * 0.07} />
         <Sea positionY={-RADIUS_Y} positionZ={HEIGHT * 0.2} radius={RADIUS * 0.998} height={HEIGHT / 5} />
 
-        {cameraPosition != camerCood3 ? <BackgroundText textIndex={textIndex} textPosition={[0, 300, -300]} textRotation={[0, 0, 0]} /> : <></>}
-        {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 300, -310]} pageRotation={[0, 0, 0]} /> */}
+        {cameraPosition != camerCood3 ?
+          <BackgroundText textIndex={textIndex} textPosition={[0, 30, -30]} textRotation={[0, 0, 0]} /> :
+          <></>
+        }
+        {/* <BackgroundPages textIndex={textIndex} pagePosition={[0, 30, -31]} pageRotation={[0, 0, 0]} /> */}
 
-        {cameraPosition == camerCood3 ? <ForegroundText textIndex={textIndex} textPosition={[-200, 300, 50]} textRotation={[0, Math.PI / 2, 0]} /> : <></>}
-        {/* <ForegroundPages textIndex={textIndex} pagePosition={[-210, 300, 50]} pageRotation={[0, Math.PI / 2, 0]} /> */}
+        {cameraPosition == camerCood3 ?
+          <ForegroundText textIndex={textIndex} textPosition={[- window.innerWidth * 0.015, window.innerHeight * 0.015, 5]} textRotation={[0, Math.PI / 2, 0]} /> :
+          <></>
+        }
+        {/* <ForegroundPages textIndex={textIndex} pagePosition={[-21, 30, 5]} pageRotation={[0, Math.PI / 2, 0]} /> */}
 
         {/* <OrbitControls enableZoom enablePen enableRotate />
         <Perf /> */}
@@ -1120,18 +1139,22 @@ const App = () => {
             <button className="btn-control" onClick={moveRight} onBlur={() => setDirection(0)}> Right ➡️ </button>
             <button className="btn-control" onClick={() => setCarLights(prevState => !prevState)}> Car Lights 💡</button>
 
+            {!showMessage ? (
+              <>
+                <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
+                <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
+                <button className="btn-control" onClick={() => setShootingStarsEnabled(prevState => !prevState)}> Shooting Stars 🌠</button>
+                <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞 / Moon 🌝</button>
+                <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
 
-            <button className="btn-control" onClick={() => setFogEnabled(prevState => !prevState)}> Fog 🌁</button>
-            <button className="btn-control" onClick={() => setStarsEnabled(prevState => !prevState)}> Stars ✨</button>
-            <button className="btn-control" onClick={() => setShootingStarsEnabled(prevState => !prevState)}> Shooting Stars 🌠</button>
-            <button className="btn-control" onClick={() => setSunEnabled(prevState => !prevState)}> Sun 🌞</button>
-            <button className="btn-control" onClick={() => setAmbientLightEnabled(prevState => !prevState)}> Ambient Light 🔆</button>
+                <button className="btn-control" onClick={() => setCameraPosition(camerCood1)}> Camera 1 </button>
+                <button className="btn-control" onClick={() => setCameraPosition(camerCood2)}> Camera 2 </button>
+                <button className="btn-control" onClick={() => setCameraPosition(camerCood3)}> Camera 3 </button>
 
-            <button className="btn-control" onClick={() => setCameraPosition(camerCood1)}> Camera 1 </button>
-            <button className="btn-control" onClick={() => setCameraPosition(camerCood2)}> Camera 2 </button>
-            <button className="btn-control" onClick={() => setCameraPosition(camerCood3)}> Camera 3 </button>
+                <label className="text-white mt-2 ml-2 text-base font-semibold">{skyPresets[textIndex].name}</label>
+              </>
+            ) : <></>}
 
-            <label className="text-white mt-2 ml-2 text-base font-semibold">{skyPresets[textIndex].name}</label>
           </>
         )}
         <button
