@@ -799,7 +799,7 @@ const skyPresets = [
 const texts = [
   "Hi, My Name is Shrey 👋",
   "Welcome to my Little Interactive Portfolio 🤗",
-  "I am a full stack developer with UI focus having 10+ years of experience in Software Engineering 👨‍💻",
+  "I am a full stack developer having 10+ years of experience in Software Engineering 👨‍💻",
   "I have worked in enterprise grade software projects for Major firms 👷🏻‍♂️",
   "Started my Journey in 2014 with Cognizant in Banking and Finance Domain 💲",
   "In 2016 I moved to a startup called Eka which provided solutions in commodity and trading domain 🌾",
