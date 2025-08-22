@@ -20,9 +20,9 @@ const SPEED = 0.35; // Movement speed
 const DAMPING = 0.005; // Damping factor
 const WHEEL_ROTATION_SPEED = 0.3;
 const GROUND_SPEED = 0.002;
-const SEA_SPEED = 0.006;
+const SEA_SPEED = 0.0025;
 const CITY_SCAPE_SPEED = 0.002;
-const CLOUD_SPEED = 0.003;
+const CLOUD_SPEED = 0.002;
 const RADIUS = 500; // Cylinder radius
 const HEIGHT = 350; // Cylinder radius
 
